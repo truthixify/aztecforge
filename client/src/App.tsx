@@ -1,5 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { AztecProvider } from './contexts/AztecContext';
 import { Layout } from './components/Layout';
 import { BountiesPage } from './pages/BountiesPage';
 import { BountyDetailPage } from './pages/BountyDetailPage';
@@ -30,6 +33,7 @@ const queryClient = new QueryClient({
 
 export default function App() {
   return (
+    <AztecProvider>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
@@ -59,7 +63,14 @@ export default function App() {
             <Route path="/reputation/:address" element={<ReputationDetailPage />} />
           </Route>
         </Routes>
+        <ToastContainer
+          position="top-right"
+          autoClose={4000}
+          theme="dark"
+          toastClassName="bg-gray-900 border border-gray-800"
+        />
       </BrowserRouter>
     </QueryClientProvider>
+    </AztecProvider>
   );
 }
