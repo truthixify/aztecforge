@@ -24,6 +24,7 @@ pub contract HackathonEngine {
         protocol::{address::AztecAddress, hash::poseidon2_hash, traits::ToField},
         state_vars::{Map, PublicMutable, PublicImmutable},
     };
+    use token::Token;
 
     #[storage]
     struct Storage<Context> {
@@ -106,9 +107,13 @@ pub contract HackathonEngine {
         total_prize_pool: u128,
         submission_deadline: u64,
         judging_deadline: u64,
+        authwit_nonce: Field,
     ) -> pub u64 {
         let organizer = self.msg_sender();
         let hackathon_id = self.storage.hackathon_count.read();
+
+        // Lock prize pool in escrow
+        let _ = self.call(Token::at(payment_token).transfer_in_public(organizer, self.address, total_prize_pool, authwit_nonce));
 
         self.storage.hackathon_organizers.at(hackathon_id).write(organizer);
         self.storage.hackathon_name_hashes.at(hackathon_id).write(name_hash);
@@ -127,8 +132,6 @@ pub contract HackathonEngine {
         self.storage.submission_count_per_hackathon.at(hackathon_id).write(0);
 
         self.storage.hackathon_count.write(hackathon_id + 1);
-
-        // TODO: Lock prize pool in escrow via token contract
 
         hackathon_id
     }
@@ -340,13 +343,14 @@ pub contract HackathonEngine {
         let prize_key = team_key; // same key
         assert(!self.storage.prize_claimed.at(prize_key).read(), "Already claimed");
 
-        let _amount = self.storage.prize_amounts.at(prize_key).read();
-        assert(_amount > 0, "No prize awarded");
+        let amount = self.storage.prize_amounts.at(prize_key).read();
+        assert(amount > 0, "No prize awarded");
 
         self.storage.prize_claimed.at(prize_key).write(true);
 
-        // TODO: Transfer prize_amount to team_lead via token contract
-        // TODO: Update reputation for team members
+        // Transfer prize to team lead
+        let token = self.storage.hackathon_tokens.at(hackathon_id).read();
+        let _ = self.call(Token::at(token).transfer_in_public(self.address, team_lead, amount, 0));
     }
 
     // -----------------------------------------

@@ -23,6 +23,7 @@ pub contract QuestTracker {
         protocol::{address::AztecAddress, hash::poseidon2_hash, traits::ToField},
         state_vars::{Map, PublicMutable, PublicImmutable},
     };
+    use token::Token;
 
     #[storage]
     struct Storage<Context> {
@@ -85,10 +86,17 @@ pub contract QuestTracker {
         max_completions: u64,
         deadline_block: u64,
         reputation_gate_id: u64,
+        authwit_nonce: Field,
     ) -> pub u64 {
         assert(quest_type <= 3, "Invalid quest type");
         let creator = self.msg_sender();
         let quest_id = self.storage.quest_count.read();
+
+        // Lock total rewards in escrow (0 if unlimited)
+        if max_completions > 0 {
+            let total_rewards = reward_per_completion * max_completions as u128;
+            let _ = self.call(Token::at(payment_token).transfer_in_public(creator, self.address, total_rewards, authwit_nonce));
+        }
 
         self.storage.quest_creators.at(quest_id).write(creator);
         self.storage.quest_name_hashes.at(quest_id).write(name_hash);
@@ -99,18 +107,15 @@ pub contract QuestTracker {
         self.storage.quest_max_completions.at(quest_id).write(max_completions);
         self.storage.quest_completion_counts.at(quest_id).write(0);
         self.storage.quest_deadlines.at(quest_id).write(deadline_block);
-        self.storage.quest_statuses.at(quest_id).write(0); // 0 = active
+        self.storage.quest_statuses.at(quest_id).write(0);
         self.storage.quest_reputation_gates.at(quest_id).write(reputation_gate_id);
 
-        // Creator is default verifier
         let verifier_key = poseidon2_hash([quest_id as Field, creator.to_field()]);
         self.storage.quest_verifiers.at(verifier_key).write(true);
 
         self.storage.quest_count.write(quest_id + 1);
         let total = self.storage.total_quests_created.read();
         self.storage.total_quests_created.write(total + 1);
-
-        // TODO: Lock total_rewards (reward_per_completion * max_completions) in escrow
 
         quest_id
     }
@@ -162,6 +167,10 @@ pub contract QuestTracker {
         let reward = self.storage.quest_rewards.at(quest_id).read();
         let tp = self.storage.total_rewards_paid.read();
         self.storage.total_rewards_paid.write(tp + reward);
+
+        // Pay reward to completer
+        let token = self.storage.quest_tokens.at(quest_id).read();
+        let _ = self.call(Token::at(token).transfer_in_public(self.address, completer, reward, 0));
     }
 
     /// Verify and approve a quest completion. Only authorized verifiers.
@@ -187,6 +196,10 @@ pub contract QuestTracker {
         let reward = self.storage.quest_rewards.at(quest_id).read();
         let tp = self.storage.total_rewards_paid.read();
         self.storage.total_rewards_paid.write(tp + reward);
+
+        // Pay reward to completer
+        let token = self.storage.quest_tokens.at(quest_id).read();
+        let _ = self.call(Token::at(token).transfer_in_public(self.address, completer, reward, 0));
     }
 
     // -----------------------------------------

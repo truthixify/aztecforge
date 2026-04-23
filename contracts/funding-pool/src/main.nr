@@ -24,6 +24,7 @@ pub contract FundingPool {
         protocol::{address::AztecAddress, hash::poseidon2_hash, traits::ToField},
         state_vars::{Map, PublicMutable, PublicImmutable},
     };
+    use token::Token;
 
     // Pool status: 0 = active, 1 = paused, 2 = closed
 
@@ -134,17 +135,20 @@ pub contract FundingPool {
     // DEPOSITS
     // -----------------------------------------
 
-    /// Deposit funds into a pool.
+    /// Deposit funds into a pool. Depositor must create an authwit first.
     #[external("public")]
-    fn deposit(pool_id: u64, amount: u128) {
+    fn deposit(pool_id: u64, amount: u128, authwit_nonce: Field) {
         let status = self.storage.pool_statuses.at(pool_id).read();
         assert(status == 0, "Pool not active");
         assert(amount > 0, "Amount must be positive");
 
         let depositor = self.msg_sender();
-        let deposit_key = poseidon2_hash([pool_id as Field, depositor.to_field()]);
+        let token = self.storage.pool_tokens.at(pool_id).read();
 
-        // Track if this is a new contributor
+        // Transfer tokens from depositor to this contract
+        let _ = self.call(Token::at(token).transfer_in_public(depositor, self.address, amount, authwit_nonce));
+
+        let deposit_key = poseidon2_hash([pool_id as Field, depositor.to_field()]);
         let existing = self.storage.deposit_amounts.at(deposit_key).read();
         if existing == 0 {
             let count = self.storage.pool_contributor_count.at(pool_id).read();
@@ -158,8 +162,6 @@ pub contract FundingPool {
 
         let global_total = self.storage.total_value_deposited.read();
         self.storage.total_value_deposited.write(global_total + amount);
-
-        // TODO: Transfer tokens from depositor to this contract
     }
 
     /// Withdraw deposited funds (only if pool allows and funds not yet allocated).
@@ -179,7 +181,9 @@ pub contract FundingPool {
         let global_total = self.storage.total_value_deposited.read();
         self.storage.total_value_deposited.write(global_total - amount);
 
-        // TODO: Transfer tokens from contract back to depositor
+        // Refund tokens to depositor
+        let token = self.storage.pool_tokens.at(pool_id).read();
+        let _ = self.call(Token::at(token).transfer_in_public(self.address, depositor, amount, 0));
     }
 
     // -----------------------------------------
@@ -218,7 +222,9 @@ pub contract FundingPool {
         let global_disbursed = self.storage.total_value_disbursed.read();
         self.storage.total_value_disbursed.write(global_disbursed + amount);
 
-        // TODO: Transfer tokens from contract to recipient
+        // Transfer tokens to recipient
+        let token = self.storage.pool_tokens.at(pool_id).read();
+        let _ = self.call(Token::at(token).transfer_in_public(self.address, recipient, amount, 0));
     }
 
     // -----------------------------------------

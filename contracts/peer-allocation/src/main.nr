@@ -24,6 +24,7 @@ pub contract PeerAllocation {
         protocol::{address::AztecAddress, hash::poseidon2_hash, traits::ToField},
         state_vars::{Map, PublicMutable, PublicImmutable},
     };
+    use token::Token;
 
     #[storage]
     struct Storage<Context> {
@@ -200,7 +201,9 @@ pub contract PeerAllocation {
         // Advance epoch
         self.storage.circle_current_epochs.at(circle_id).write(current_epoch + 1);
 
-        // TODO: Transfer reward_pool tokens from admin to this contract
+        // Transfer reward pool from admin to this contract
+        let token = self.storage.circle_tokens.at(circle_id).read();
+        let _ = self.call(Token::at(token).transfer_in_public(circle_admin, self.address, reward_pool, 0));
     }
 
     /// Claim reward for a completed epoch based on GIVE received.
@@ -239,8 +242,9 @@ pub contract PeerAllocation {
         let total_dist = self.storage.circle_total_distributed.at(circle_id).read();
         self.storage.circle_total_distributed.at(circle_id).write(total_dist + reward);
 
-        // TODO: Transfer reward tokens to member
-        // TODO: Call ReputationRegistry.record_peer_recognition(member, received as u128)
+        // Transfer reward tokens to member
+        let token = self.storage.circle_tokens.at(circle_id).read();
+        let _ = self.call(Token::at(token).transfer_in_public(self.address, member, reward, 0));
     }
 
     // -----------------------------------------
