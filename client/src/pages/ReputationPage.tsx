@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { Star, Trophy, Hammer, Scroll, Users } from 'lucide-react';
 import { reputation } from '../lib/api';
 import { TierBadge } from '../components/StatusBadge';
@@ -6,6 +7,7 @@ import { StatCard } from '../components/StatCard';
 import type { ContributorReputation } from '../types';
 
 export function ReputationPage() {
+  const navigate = useNavigate();
   const { data: leaderboard = [] } = useQuery<ContributorReputation[]>({
     queryKey: ['reputation', 'leaderboard'],
     queryFn: () => reputation.leaderboard(20),
@@ -63,7 +65,7 @@ export function ReputationPage() {
               </tr>
             ) : (
               leaderboard.map((contributor, index) => (
-                <tr key={contributor.address} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+                <tr key={contributor.address} className="border-b border-gray-800/50 hover:bg-gray-800/30 cursor-pointer" onClick={() => navigate(`/reputation/${contributor.address}`)}>
                   <td className="px-5 py-3 text-gray-400">{index + 1}</td>
                   <td className="px-5 py-3">
                     <span className="text-white font-mono text-sm">
