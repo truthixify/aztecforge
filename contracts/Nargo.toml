@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "token",
     "bounty",
     "reputation",
     "funding-pool",

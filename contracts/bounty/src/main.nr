@@ -2,11 +2,13 @@ use aztec::macros::aztec;
 
 /// BountyBoard contract for AztecForge.
 ///
-/// Manages bounty lifecycle: creation, claiming, submission, approval, and payment.
+/// Manages bounty lifecycle: creation, claiming, submission, approval, payment.
+/// Token transfers are done via cross-contract calls to the standard Aztec token
+/// contract (Token::at().transfer_in_public()). Escrow is held by this contract.
 ///
 /// Privacy model:
-///   Public (by default): bounty details, reward amount, who claimed/completed, submissions
-///   Private (optional): reward amount can be hidden by creator for sensitive tasks
+///   Public (by default): bounty details, reward amount, who claimed/completed
+///   Private (optional): reward amount can be hidden by creator
 ///   Always private: payment wallet links, contributor aggregate earnings
 #[aztec]
 pub contract BountyBoard {
@@ -18,6 +20,7 @@ pub contract BountyBoard {
         protocol::address::AztecAddress,
         state_vars::{Map, PublicMutable, PublicImmutable},
     };
+    use token::Token;
 
     // Bounty status:
     //   0 = open
@@ -30,11 +33,9 @@ pub contract BountyBoard {
     #[storage]
     struct Storage<Context> {
         admin: PublicImmutable<AztecAddress, Context>,
-
-        // Bounty counter
         bounty_count: PublicMutable<u64, Context>,
 
-        // Per-bounty fields (keyed by bounty_id)
+        // Per-bounty fields
         bounty_creators: Map<u64, PublicMutable<AztecAddress, Context>, Context>,
         bounty_tokens: Map<u64, PublicMutable<AztecAddress, Context>, Context>,
         bounty_amounts: Map<u64, PublicMutable<u128, Context>, Context>,
@@ -46,7 +47,7 @@ pub contract BountyBoard {
         bounty_submissions: Map<u64, PublicMutable<Field, Context>, Context>,
         bounty_escrows: Map<u64, PublicMutable<u128, Context>, Context>,
 
-        // Aggregate stats
+        // Aggregates
         total_bounties_posted: PublicMutable<u64, Context>,
         total_bounties_completed: PublicMutable<u64, Context>,
         total_value_escrowed: PublicMutable<u128, Context>,
@@ -68,8 +69,9 @@ pub contract BountyBoard {
     // CREATION
     // -----------------------------------------
 
-    /// Create a bounty and escrow the reward.
-    /// Reward amount is public by default; set is_amount_public=false to hide it.
+    /// Create a bounty with token escrow.
+    /// Creator must first create an authwit allowing this contract to transfer
+    /// their tokens. The nonce ensures the authwit can only be used once.
     #[external("public")]
     fn create_bounty(
         payment_token: AztecAddress,
@@ -77,9 +79,13 @@ pub contract BountyBoard {
         description_hash: Field,
         deadline_block: u64,
         is_amount_public: bool,
+        authwit_nonce: Field,
     ) -> pub u64 {
         let creator = self.msg_sender();
         let bounty_id = self.storage.bounty_count.read();
+
+        // Transfer tokens from creator to this contract (escrow)
+        let _ = self.call(Token::at(payment_token).transfer_in_public(creator, self.address, reward_amount, authwit_nonce));
 
         self.storage.bounty_creators.at(bounty_id).write(creator);
         self.storage.bounty_tokens.at(bounty_id).write(payment_token);
@@ -91,22 +97,17 @@ pub contract BountyBoard {
         self.storage.bounty_submissions.at(bounty_id).write(0);
         self.storage.bounty_escrows.at(bounty_id).write(reward_amount);
 
-        // Public listing: full value if public, 0 if hidden
         if is_amount_public {
             self.storage.bounty_amounts.at(bounty_id).write(reward_amount);
         } else {
             self.storage.bounty_amounts.at(bounty_id).write(0);
         }
 
-        // Update counters
         self.storage.bounty_count.write(bounty_id + 1);
         let posted = self.storage.total_bounties_posted.read();
         self.storage.total_bounties_posted.write(posted + 1);
         let escrowed = self.storage.total_value_escrowed.read();
         self.storage.total_value_escrowed.write(escrowed + reward_amount);
-
-        // TODO: Transfer reward_amount from creator to this contract via token contract
-        // Token::at(payment_token).transfer_in_public(creator, self.address, reward_amount, 0)
 
         bounty_id
     }
@@ -115,23 +116,18 @@ pub contract BountyBoard {
     // CLAIMING & SUBMISSION
     // -----------------------------------------
 
-    /// Claim a bounty to work on it. Public -- portfolio credit for the contributor.
+    /// Claim a bounty to work on it. Public -- portfolio credit.
     #[external("public")]
     fn claim_bounty(bounty_id: u64) {
         let claimer = self.msg_sender();
         let status = self.storage.bounty_statuses.at(bounty_id).read();
         assert(status == 0, "Bounty not open");
 
-        let deadline = self.storage.bounty_deadlines.at(bounty_id).read();
-        // TODO: Re-enable block number check once block_number() is available in public context
-        // assert(block_number < deadline, "Deadline passed");
-        let _ = deadline;
-
         self.storage.bounty_claimers.at(bounty_id).write(claimer);
         self.storage.bounty_statuses.at(bounty_id).write(1);
     }
 
-    /// Submit completed work. Public -- submission is portfolio credit.
+    /// Submit completed work. Public -- portfolio credit.
     #[external("public")]
     fn submit_work(bounty_id: u64, submission_hash: Field) {
         let submitter = self.msg_sender();
@@ -145,7 +141,7 @@ pub contract BountyBoard {
         self.storage.bounty_statuses.at(bounty_id).write(2);
     }
 
-    /// Give up a claim and reopen the bounty.
+    /// Give up a claim and reopen.
     #[external("public")]
     fn unclaim_bounty(bounty_id: u64) {
         let caller = self.msg_sender();
@@ -163,7 +159,7 @@ pub contract BountyBoard {
     // APPROVAL & REJECTION
     // -----------------------------------------
 
-    /// Approve submission and release escrow to the claimer.
+    /// Approve submission and pay the claimer from escrow.
     #[external("public")]
     fn approve_submission(bounty_id: u64) {
         let caller = self.msg_sender();
@@ -174,6 +170,8 @@ pub contract BountyBoard {
         assert(status == 2, "No submission pending");
 
         let escrow = self.storage.bounty_escrows.at(bounty_id).read();
+        let claimer = self.storage.bounty_claimers.at(bounty_id).read();
+        let token = self.storage.bounty_tokens.at(bounty_id).read();
 
         self.storage.bounty_statuses.at(bounty_id).write(3);
         self.storage.bounty_escrows.at(bounty_id).write(0);
@@ -183,13 +181,11 @@ pub contract BountyBoard {
         let paid = self.storage.total_value_paid.read();
         self.storage.total_value_paid.write(paid + escrow);
 
-        // TODO: Transfer escrow to claimer via token contract
-        // let claimer = self.storage.bounty_claimers.at(bounty_id).read();
-        // let token = self.storage.bounty_tokens.at(bounty_id).read();
-        // Token::at(token).transfer_in_public(self.address, claimer, escrow, 0)
+        // Transfer escrowed tokens to the claimer
+        let _ = self.call(Token::at(token).transfer_in_public(self.address, claimer, escrow, 0));
     }
 
-    /// Reject submission and reopen the bounty.
+    /// Reject submission and reopen.
     #[external("public")]
     fn reject_submission(bounty_id: u64) {
         let caller = self.msg_sender();
@@ -208,7 +204,7 @@ pub contract BountyBoard {
     // CANCELLATION
     // -----------------------------------------
 
-    /// Cancel a bounty and refund escrow. Only if no submission pending.
+    /// Cancel a bounty and refund escrowed tokens to creator.
     #[external("public")]
     fn cancel_bounty(bounty_id: u64) {
         let caller = self.msg_sender();
@@ -219,21 +215,23 @@ pub contract BountyBoard {
         assert((status == 0) | (status == 1), "Cannot cancel after submission");
 
         let escrow = self.storage.bounty_escrows.at(bounty_id).read();
+        let token = self.storage.bounty_tokens.at(bounty_id).read();
+
         self.storage.bounty_statuses.at(bounty_id).write(4);
         self.storage.bounty_escrows.at(bounty_id).write(0);
 
         let total_esc = self.storage.total_value_escrowed.read();
         self.storage.total_value_escrowed.write(total_esc - escrow);
 
-        // TODO: Refund escrow to creator via token contract
+        // Refund escrowed tokens to creator
+        let _ = self.call(Token::at(token).transfer_in_public(self.address, creator, escrow, 0));
     }
 
     // -----------------------------------------
     // DISPUTE
     // -----------------------------------------
 
-    /// Flag a bounty as disputed. Can be called by either creator or claimer
-    /// when a submission is pending.
+    /// Flag a bounty as disputed.
     #[external("public")]
     fn dispute_bounty(bounty_id: u64) {
         let caller = self.msg_sender();
@@ -247,8 +245,8 @@ pub contract BountyBoard {
         self.storage.bounty_statuses.at(bounty_id).write(5);
     }
 
-    /// Resolve a dispute. Only admin can resolve.
-    /// If approve=true, pays the claimer. If false, refunds the creator.
+    /// Resolve a dispute. Only admin.
+    /// If approve=true, pays claimer. If false, refunds creator.
     #[external("public")]
     fn resolve_dispute(bounty_id: u64, approve: bool) {
         let caller = self.msg_sender();
@@ -259,6 +257,7 @@ pub contract BountyBoard {
         assert(status == 5, "Not disputed");
 
         let escrow = self.storage.bounty_escrows.at(bounty_id).read();
+        let token = self.storage.bounty_tokens.at(bounty_id).read();
         self.storage.bounty_escrows.at(bounty_id).write(0);
 
         if approve {
@@ -267,12 +266,16 @@ pub contract BountyBoard {
             self.storage.total_bounties_completed.write(completed + 1);
             let paid = self.storage.total_value_paid.read();
             self.storage.total_value_paid.write(paid + escrow);
-            // TODO: Transfer escrow to claimer
+
+            let claimer = self.storage.bounty_claimers.at(bounty_id).read();
+            let _ = self.call(Token::at(token).transfer_in_public(self.address, claimer, escrow, 0));
         } else {
             self.storage.bounty_statuses.at(bounty_id).write(4);
             let total_esc = self.storage.total_value_escrowed.read();
             self.storage.total_value_escrowed.write(total_esc - escrow);
-            // TODO: Refund escrow to creator
+
+            let creator = self.storage.bounty_creators.at(bounty_id).read();
+            let _ = self.call(Token::at(token).transfer_in_public(self.address, creator, escrow, 0));
         }
     }
 
