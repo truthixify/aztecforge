@@ -6,9 +6,13 @@ import { BountyDetailPage } from './pages/BountyDetailPage';
 import { CreateBountyPage } from './pages/CreateBountyPage';
 import { ReputationPage } from './pages/ReputationPage';
 import { HackathonsPage } from './pages/HackathonsPage';
+import { CreateHackathonPage } from './pages/CreateHackathonPage';
 import { PoolsPage } from './pages/PoolsPage';
+import { CreatePoolPage } from './pages/CreatePoolPage';
 import { CirclesPage } from './pages/CirclesPage';
+import { CreateCirclePage } from './pages/CreateCirclePage';
 import { QuestsPage } from './pages/QuestsPage';
+import { CreateQuestPage } from './pages/CreateQuestPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,9 +35,13 @@ export default function App() {
             <Route path="/bounties/:id" element={<BountyDetailPage />} />
             <Route path="/reputation" element={<ReputationPage />} />
             <Route path="/hackathons" element={<HackathonsPage />} />
+            <Route path="/hackathons/new" element={<CreateHackathonPage />} />
             <Route path="/pools" element={<PoolsPage />} />
+            <Route path="/pools/new" element={<CreatePoolPage />} />
             <Route path="/circles" element={<CirclesPage />} />
+            <Route path="/circles/new" element={<CreateCirclePage />} />
             <Route path="/quests" element={<QuestsPage />} />
+            <Route path="/quests/new" element={<CreateQuestPage />} />
           </Route>
         </Routes>
       </BrowserRouter>
