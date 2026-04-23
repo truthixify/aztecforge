@@ -1,0 +1,9 @@
+[workspace]
+members = [
+    "bounty",
+    "reputation",
+    "funding-pool",
+    "peer-allocation",
+    "hackathon",
+    "quest",
+]
