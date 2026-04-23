@@ -46,4 +46,9 @@ export class CreateBountyDto {
   @IsString()
   @IsOptional()
   difficulty?: string;
+
+  @ApiProperty({ description: 'Authwit nonce for token transfer authorization', required: false })
+  @IsString()
+  @IsOptional()
+  authwitNonce?: string;
 }
