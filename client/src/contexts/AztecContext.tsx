@@ -1,16 +1,20 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import { EmbeddedWallet } from '@aztec/wallets/embedded';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { AztecWallet } from '@azguardwallet/aztec-wallet';
 import type { Wallet } from '@aztec/aztec.js/wallet';
 import type { AztecAddress } from '@aztec/aztec.js/addresses';
 import { setSender } from '../lib/api';
+
+type ConnectionMode = 'azguard' | 'embedded' | null;
 
 interface AztecContextType {
   wallet: Wallet | null;
   address: AztecAddress | null;
   isConnecting: boolean;
   isConnected: boolean;
+  connectionMode: ConnectionMode;
   error: string | null;
-  connect: () => Promise<void>;
+  connectAzguard: () => Promise<void>;
+  connectEmbedded: () => Promise<void>;
   disconnect: () => void;
 }
 
@@ -19,8 +23,10 @@ const AztecContext = createContext<AztecContextType>({
   address: null,
   isConnecting: false,
   isConnected: false,
+  connectionMode: null,
   error: null,
-  connect: async () => {},
+  connectAzguard: async () => {},
+  connectEmbedded: async () => {},
   disconnect: () => {},
 });
 
@@ -36,18 +42,70 @@ export function AztecProvider({ children }: AztecProviderProps) {
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [address, setAddress] = useState<AztecAddress | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionMode, setConnectionMode] = useState<ConnectionMode>(null);
   const [error, setError] = useState<string | null>(null);
+  const [azguardWallet, setAzguardWallet] = useState<AztecWallet | null>(null);
 
-  const connect = useCallback(async () => {
+  // Track Azguard disconnection events
+  useEffect(() => {
+    if (!azguardWallet) return;
+
+    const handleDisconnected = () => {
+      setWallet(null);
+      setAddress(null);
+      setConnectionMode(null);
+      setSender('');
+    };
+
+    azguardWallet.onDisconnected.addHandler(handleDisconnected);
+    return () => {
+      azguardWallet.onDisconnected.removeHandler(handleDisconnected);
+    };
+  }, [azguardWallet]);
+
+  // Connect via Azguard Wallet (real wallet - browser extension / mobile)
+  const connectAzguard = useCallback(async () => {
     setIsConnecting(true);
     setError(null);
 
     try {
-      const nodeUrl = process.env.AZTEC_NODE_URL ?? 'http://localhost:8080';
+      const aztecWallet = await AztecWallet.connect(
+        {
+          name: 'AztecForge',
+          description: 'Private community incentive platform on Aztec Network',
+          url: window.location.origin,
+        },
+        import.meta.env.VITE_AZTEC_CHAIN ?? 'sandbox',
+      );
+
+      const accounts = await aztecWallet.getAccounts();
+      const addr = accounts[0].item;
+
+      setAzguardWallet(aztecWallet);
+      setWallet(aztecWallet as unknown as Wallet);
+      setAddress(addr);
+      setConnectionMode('azguard');
+      setSender(addr.toString());
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to connect Azguard wallet';
+      setError(message);
+      console.error('Azguard connection failed:', err);
+    } finally {
+      setIsConnecting(false);
+    }
+  }, []);
+
+  // Connect via embedded wallet (development / local sandbox only)
+  const connectEmbedded = useCallback(async () => {
+    setIsConnecting(true);
+    setError(null);
+
+    try {
+      const { EmbeddedWallet } = await import('@aztec/wallets/embedded');
+      const nodeUrl = import.meta.env.VITE_AZTEC_NODE_URL ?? 'http://localhost:8080';
 
       const embeddedWallet = await EmbeddedWallet.create(nodeUrl);
 
-      // For development: use test accounts if available
       try {
         const { getInitialTestAccountsData } = await import('@aztec/accounts/testing');
         const [accountData] = await getInitialTestAccountsData();
@@ -61,28 +119,37 @@ export function AztecProvider({ children }: AztecProviderProps) {
           setSender(accountData.address.toString());
         }
       } catch {
-        // No test accounts available — create a fresh ephemeral account
         const account = await embeddedWallet.createSchnorrAccount();
-        const addr = account.address;
-        setAddress(addr);
-        setSender(addr.toString());
+        setAddress(account.address);
+        setSender(account.address.toString());
       }
 
       setWallet(embeddedWallet);
+      setConnectionMode('embedded');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to connect wallet';
+      const message = err instanceof Error ? err.message : 'Failed to connect embedded wallet';
       setError(message);
-      console.error('Aztec wallet connection failed:', err);
+      console.error('Embedded wallet connection failed:', err);
     } finally {
       setIsConnecting(false);
     }
   }, []);
 
-  const disconnect = useCallback(() => {
+  const disconnect = useCallback(async () => {
+    if (azguardWallet) {
+      try {
+        await azguardWallet.disconnect();
+      } catch {
+        // Ignore disconnect errors
+      }
+    }
     setWallet(null);
     setAddress(null);
+    setAzguardWallet(null);
+    setConnectionMode(null);
+    setError(null);
     setSender('');
-  }, []);
+  }, [azguardWallet]);
 
   return (
     <AztecContext.Provider
@@ -91,8 +158,10 @@ export function AztecProvider({ children }: AztecProviderProps) {
         address,
         isConnecting,
         isConnected: wallet !== null,
+        connectionMode,
         error,
-        connect,
+        connectAzguard,
+        connectEmbedded,
         disconnect,
       }}
     >

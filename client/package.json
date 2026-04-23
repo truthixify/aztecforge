@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@azguardwallet/aztec-wallet": "4.1.0-rc.4",
     "@aztec/accounts": "^4.2.0",
     "@aztec/aztec.js": "^4.2.0",
     "@aztec/stdlib": "^4.2.0",
