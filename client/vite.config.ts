@@ -18,8 +18,10 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       // Headers required for bb WASM multithreaded mode
       headers: {
-        'Cross-Origin-Opener-Policy': 'same-origin',
-        'Cross-Origin-Embedder-Policy': 'require-corp',
+        // same-origin-allow-popups: enables WASM SharedArrayBuffer while
+        // allowing wallet connect popups (Azguard) to communicate back
+        'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+        'Cross-Origin-Embedder-Policy': 'credentialless',
       },
       proxy: {
         '/api': {
