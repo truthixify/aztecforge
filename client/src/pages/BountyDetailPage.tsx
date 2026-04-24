@@ -2,6 +2,9 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Clock, User, FileText, DollarSign } from 'lucide-react';
 import { bounties } from '../lib/api';
+import { useBountyBoard } from '../hooks/useContracts';
+import { useContractCall } from '../hooks/useContractCall';
+import { useAztec } from '../contexts/AztecContext';
 import { BountyStatusBadge } from '../components/StatusBadge';
 import { BountyStatus, type Bounty } from '../types';
 
@@ -9,30 +12,57 @@ export function BountyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const bountyId = Number(id);
   const queryClient = useQueryClient();
+  const { contract: bountyContract } = useBountyBoard();
+  const { execute } = useContractCall();
+  const { address } = useAztec();
+  const onChain = !!bountyContract && !!address;
 
   const { data: bounty, isLoading } = useQuery<Bounty>({
     queryKey: ['bounties', bountyId],
     queryFn: () => bounties.get(bountyId),
   });
 
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['bounties'] });
+
+  // On-chain mutations (fall back to API if contracts not connected)
   const claimMutation = useMutation({
-    mutationFn: () => bounties.claim(bountyId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bounties', bountyId] }),
+    mutationFn: async () => {
+      if (onChain) {
+        return execute(bountyContract.methods.claim_bounty(BigInt(bountyId)), 'Bounty claimed');
+      }
+      return bounties.claim(bountyId);
+    },
+    onSuccess: invalidate,
   });
 
   const approveMutation = useMutation({
-    mutationFn: () => bounties.approve(bountyId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bounties', bountyId] }),
+    mutationFn: async () => {
+      if (onChain) {
+        return execute(bountyContract.methods.approve_submission(BigInt(bountyId)), 'Submission approved & paid');
+      }
+      return bounties.approve(bountyId);
+    },
+    onSuccess: invalidate,
   });
 
   const rejectMutation = useMutation({
-    mutationFn: () => bounties.reject(bountyId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bounties', bountyId] }),
+    mutationFn: async () => {
+      if (onChain) {
+        return execute(bountyContract.methods.reject_submission(BigInt(bountyId)), 'Submission rejected');
+      }
+      return bounties.reject(bountyId);
+    },
+    onSuccess: invalidate,
   });
 
   const cancelMutation = useMutation({
-    mutationFn: () => bounties.cancel(bountyId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bounties', bountyId] }),
+    mutationFn: async () => {
+      if (onChain) {
+        return execute(bountyContract.methods.cancel_bounty(BigInt(bountyId)), 'Bounty cancelled & refunded');
+      }
+      return bounties.cancel(bountyId);
+    },
+    onSuccess: invalidate,
   });
 
   if (isLoading || !bounty) {
@@ -41,7 +71,7 @@ export function BountyDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <Link to="/" className="flex items-center gap-2 text-gray-400 hover:text-gray-200 mb-6">
+      <Link to="/bounties" className="flex items-center gap-2 text-gray-400 hover:text-gray-200 mb-6">
         <ArrowLeft className="w-4 h-4" />
         Back to Bounties
       </Link>
@@ -53,12 +83,16 @@ export function BountyDetailPage() {
               <h1 className="text-2xl font-bold text-white">{bounty.title}</h1>
               <BountyStatusBadge status={bounty.status} />
             </div>
+            {onChain && (
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium border bg-green-500/10 text-green-400 border-green-500/20">
+                <span className="w-1 h-1 rounded-full bg-current" />
+                On-chain
+              </span>
+            )}
             {bounty.skills?.length > 0 && (
               <div className="flex gap-2 mt-2">
                 {bounty.skills.map((skill) => (
-                  <span key={skill} className="bg-gray-800 px-2 py-0.5 rounded text-xs text-gray-300">
-                    {skill}
-                  </span>
+                  <span key={skill} className="bg-gray-800 px-2 py-0.5 rounded text-xs text-gray-300">{skill}</span>
                 ))}
               </div>
             )}
@@ -79,7 +113,7 @@ export function BountyDetailPage() {
           <p className="text-gray-300 whitespace-pre-wrap">{bounty.description}</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 p-4 bg-gray-950/50 rounded-lg">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 p-4 bg-gray-950/50 border border-gray-800 rounded-xl">
           <div className="flex items-center gap-2 text-sm text-gray-400">
             <User className="w-4 h-4" />
             <div>
@@ -105,9 +139,7 @@ export function BountyDetailPage() {
             <FileText className="w-4 h-4" />
             <div>
               <p className="text-xs text-gray-500">Claimer</p>
-              <p className="text-gray-300 font-mono text-xs">
-                {bounty.claimer || 'None'}
-              </p>
+              <p className="text-gray-300 font-mono text-xs">{bounty.claimer || 'None'}</p>
             </div>
           </div>
         </div>
@@ -124,7 +156,7 @@ export function BountyDetailPage() {
             <button
               onClick={() => claimMutation.mutate()}
               disabled={claimMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium transition-colors cursor-pointer disabled:opacity-60"
             >
               {claimMutation.isPending ? 'Claiming...' : 'Claim Bounty'}
             </button>
@@ -134,14 +166,14 @@ export function BountyDetailPage() {
               <button
                 onClick={() => approveMutation.mutate()}
                 disabled={approveMutation.isPending}
-                className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg font-medium transition-colors"
+                className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg font-medium transition-colors cursor-pointer disabled:opacity-60"
               >
                 {approveMutation.isPending ? 'Approving...' : 'Approve & Pay'}
               </button>
               <button
                 onClick={() => rejectMutation.mutate()}
                 disabled={rejectMutation.isPending}
-                className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-medium transition-colors"
+                className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-medium transition-colors cursor-pointer disabled:opacity-60"
               >
                 Reject
               </button>
@@ -151,7 +183,7 @@ export function BountyDetailPage() {
             <button
               onClick={() => cancelMutation.mutate()}
               disabled={cancelMutation.isPending}
-              className="bg-gray-700 hover:bg-gray-600 text-gray-300 px-5 py-2 rounded-lg font-medium transition-colors"
+              className="bg-gray-700 hover:bg-gray-600 text-gray-300 px-5 py-2 rounded-lg font-medium transition-colors cursor-pointer disabled:opacity-60"
             >
               Cancel Bounty
             </button>

@@ -13,9 +13,18 @@
     "test:client": "pnpm --filter client test",
     "test:server": "pnpm --filter server test",
     "test": "pnpm test:contracts && pnpm test:server && pnpm test:client",
-    "lint": "pnpm --filter client lint && pnpm --filter server lint"
+    "lint": "pnpm --filter client lint && pnpm --filter server lint",
+    "deploy": "npx tsx scripts/deploy.ts",
+    "codegen": "cd contracts && aztec codegen target --outdir ../client/src/artifacts"
   },
   "engines": {
     "node": ">=24.0.0"
+  },
+  "devDependencies": {
+    "@aztec/accounts": "^4.2.0",
+    "@aztec/aztec.js": "^4.2.0",
+    "@aztec/noir-contracts.js": "^4.2.0",
+    "@aztec/wallets": "^4.2.0",
+    "tsx": "^4.21.0"
   }
 }
