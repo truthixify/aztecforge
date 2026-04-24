@@ -60,6 +60,9 @@ export const pools = {
     api.post(`/funding-pools/${id}/deposit`, { amount }).then((r) => r.data),
   allocate: (id: number, data: { recipient: string; amount: string; reason: string }) =>
     api.post(`/funding-pools/${id}/allocate`, data).then((r) => r.data),
+  pause: (id: number) => api.patch(`/funding-pools/${id}/pause`).then((r) => r.data),
+  resume: (id: number) => api.patch(`/funding-pools/${id}/resume`).then((r) => r.data),
+  close: (id: number) => api.patch(`/funding-pools/${id}/close`).then((r) => r.data),
 };
 
 // Peer Allocation
@@ -80,6 +83,8 @@ export const circles = {
     api.post(`/peer-allocation/circles/${id}/give`, data).then((r) => r.data),
   advanceEpoch: (id: number) =>
     api.patch(`/peer-allocation/circles/${id}/advance-epoch`).then((r) => r.data),
+  removeMember: (id: number, member: string) =>
+    api.delete(`/peer-allocation/circles/${id}/members/${member}`).then((r) => r.data),
   claimReward: (id: number, epoch: number) =>
     api.post(`/peer-allocation/circles/${id}/claim/${epoch}`).then((r) => r.data),
 };
@@ -113,6 +118,10 @@ export const hackathons = {
     api.post(`/hackathons/${id}/submissions/${subId}/score`, data).then((r) => r.data),
   awardPrize: (id: number, data: { teamId: number; placement: number; prizeAmount: string }) =>
     api.post(`/hackathons/${id}/prizes`, data).then((r) => r.data),
+  startBuilding: (id: number) => api.patch(`/hackathons/${id}/start-building`).then((r) => r.data),
+  startJudging: (id: number) => api.patch(`/hackathons/${id}/start-judging`).then((r) => r.data),
+  finalize: (id: number) => api.patch(`/hackathons/${id}/finalize`).then((r) => r.data),
+  addJudge: (id: number, judge: string) => api.post(`/hackathons/${id}/judges`, { judge }).then((r) => r.data),
 };
 
 // Quests
@@ -136,6 +145,9 @@ export const quests = {
     api.post(`/quests/${id}/complete`, { verificationUrl }).then((r) => r.data),
   verify: (id: number, data: { completer: string; verificationUrl: string }) =>
     api.post(`/quests/${id}/verify`, data).then((r) => r.data),
+  deactivate: (id: number) => api.patch(`/quests/${id}/deactivate`).then((r) => r.data),
+  addVerifier: (id: number, verifier: string) =>
+    api.post(`/quests/${id}/verifiers`, { verifier }).then((r) => r.data),
 };
 
 export default api;

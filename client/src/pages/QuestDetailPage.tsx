@@ -37,15 +37,12 @@ export function QuestDetailPage() {
   });
 
   const deactivateMut = useMutation({
-    mutationFn: () => fetch(`/api/quests/${questId}/deactivate`, { method: 'PATCH', headers: { 'x-sender': 'creator' } }),
+    mutationFn: () => quests.deactivate(questId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['quests', questId] }),
   });
 
   const addVerifierMut = useMutation({
-    mutationFn: () => fetch(`/api/quests/${questId}/verifiers`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-sender': 'creator' },
-      body: JSON.stringify({ verifier: verifierAddr }),
-    }),
+    mutationFn: () => quests.addVerifier(questId, verifierAddr),
     onSuccess: () => setVerifierAddr(''),
   });
 

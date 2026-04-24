@@ -37,15 +37,15 @@ export function PoolDetailPage() {
   });
 
   const pauseMut = useMutation({
-    mutationFn: () => fetch(`/api/funding-pools/${poolId}/pause`, { method: 'PATCH', headers: { 'x-sender': 'curator' } }),
+    mutationFn: () => pools.pause(poolId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['pools', poolId] }),
   });
   const resumeMut = useMutation({
-    mutationFn: () => fetch(`/api/funding-pools/${poolId}/resume`, { method: 'PATCH', headers: { 'x-sender': 'curator' } }),
+    mutationFn: () => pools.resume(poolId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['pools', poolId] }),
   });
   const closeMut = useMutation({
-    mutationFn: () => fetch(`/api/funding-pools/${poolId}/close`, { method: 'PATCH', headers: { 'x-sender': 'curator' } }),
+    mutationFn: () => pools.close(poolId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['pools', poolId] }),
   });
 

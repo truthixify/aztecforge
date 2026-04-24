@@ -35,9 +35,9 @@ export function HackathonDetailPage() {
     mutationFn: () => hackathons.score(hackId, scoreForm.subId!, { score: scoreForm.score }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['hackathons', hackId, 'submissions'] }); setScoreForm({ subId: null, score: 80 }); },
   });
-  const startBuilding = useMutation({ mutationFn: () => hackathons.list().then(() => fetch(`/api/hackathons/${hackId}/start-building`, { method: 'PATCH', headers: { 'x-sender': 'organizer' } })), onSuccess: () => qc.invalidateQueries({ queryKey: ['hackathons', hackId] }) });
-  const startJudging = useMutation({ mutationFn: () => fetch(`/api/hackathons/${hackId}/start-judging`, { method: 'PATCH', headers: { 'x-sender': 'organizer' } }), onSuccess: () => qc.invalidateQueries({ queryKey: ['hackathons', hackId] }) });
-  const finalize = useMutation({ mutationFn: () => fetch(`/api/hackathons/${hackId}/finalize`, { method: 'PATCH', headers: { 'x-sender': 'organizer' } }), onSuccess: () => qc.invalidateQueries({ queryKey: ['hackathons', hackId] }) });
+  const startBuilding = useMutation({ mutationFn: () => hackathons.startBuilding(hackId), onSuccess: () => qc.invalidateQueries({ queryKey: ['hackathons', hackId] }) });
+  const startJudging = useMutation({ mutationFn: () => hackathons.startJudging(hackId), onSuccess: () => qc.invalidateQueries({ queryKey: ['hackathons', hackId] }) });
+  const finalize = useMutation({ mutationFn: () => hackathons.finalize(hackId), onSuccess: () => qc.invalidateQueries({ queryKey: ['hackathons', hackId] }) });
   const awardPrize = useMutation({
     mutationFn: () => hackathons.awardPrize(hackId, prizeForm),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['hackathons', hackId] }); setPrizeForm({ teamId: 0, placement: 1, prizeAmount: '' }); },

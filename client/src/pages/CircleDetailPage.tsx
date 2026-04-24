@@ -24,9 +24,7 @@ export function CircleDetailPage() {
   });
 
   const removeMemberMut = useMutation({
-    mutationFn: (member: string) => fetch(`/api/peer-allocation/circles/${circleId}/members/${member}`, {
-      method: 'DELETE', headers: { 'x-sender': 'admin' },
-    }),
+    mutationFn: (member: string) => circles.removeMember(circleId, member),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['circles', circleId] }),
   });
 
