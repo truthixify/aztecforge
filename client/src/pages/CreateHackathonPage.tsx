@@ -2,7 +2,7 @@ import { useToast } from "../components/Toast";
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { hackathons } from '../lib/api';
+import { listings } from '../lib/api';
 
 export function CreateHackathonPage() {
   const navigate = useNavigate();
