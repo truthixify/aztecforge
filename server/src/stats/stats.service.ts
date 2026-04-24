@@ -7,45 +7,52 @@ export class StatsService {
 
   async getDashboardStats() {
     const [
-      totalBounties,
-      activeBounties,
-      completedBounties,
-      totalHackathons,
-      activeHackathons,
+      totalListings,
+      openListings,
+      completedListings,
+      totalOrgs,
+      totalUsers,
       totalPools,
-      totalQuests,
-      totalContributors,
-      bounties,
+      totalSubmissions,
+      listings,
     ] = await Promise.all([
-      this.prisma.bounty.count(),
-      this.prisma.bounty.count({ where: { status: { in: [0, 1, 2] } } }),
-      this.prisma.bounty.count({ where: { status: 3 } }),
-      this.prisma.hackathon.count(),
-      this.prisma.hackathon.count({ where: { status: { in: [0, 1, 2] } } }),
+      this.prisma.listing.count({ where: { isActive: true } }),
+      this.prisma.listing.count({ where: { status: 'OPEN' } }),
+      this.prisma.listing.count({ where: { status: 'COMPLETED' } }),
+      this.prisma.organization.count({ where: { isActive: true } }),
+      this.prisma.user.count(),
       this.prisma.fundingPool.count(),
-      this.prisma.quest.count(),
-      this.prisma.contributor.count(),
-      this.prisma.bounty.findMany({ select: { escrowBalance: true, rewardAmount: true, status: true } }),
+      this.prisma.listingSubmission.count(),
+      this.prisma.listing.findMany({
+        where: { isActive: true },
+        select: { status: true, escrowBalance: true, rewardAmount: true, type: true },
+      }),
     ]);
 
     let totalEscrowed = 0n;
     let totalPaid = 0n;
-    for (const b of bounties) {
-      if (b.status < 3) totalEscrowed += BigInt(b.escrowBalance || '0');
-      if (b.status === 3) totalPaid += BigInt(b.rewardAmount || '0');
+    const typeCounts: Record<string, number> = {};
+    for (const l of listings) {
+      if (['OPEN', 'REVIEW', 'CLOSED'].includes(l.status)) totalEscrowed += BigInt(l.escrowBalance || '0');
+      if (l.status === 'COMPLETED') totalPaid += BigInt(l.rewardAmount || '0');
+      typeCounts[l.type] = (typeCounts[l.type] || 0) + 1;
     }
 
     return {
-      activeBounties,
-      totalBounties,
-      completedBounties,
+      totalListings,
+      openListings,
+      completedListings,
       totalEscrowed: totalEscrowed.toString(),
       totalPaid: totalPaid.toString(),
-      totalHackathons,
-      activeHackathons,
+      totalOrgs,
+      totalUsers,
       totalPools,
-      totalQuests,
-      totalContributors,
+      totalSubmissions,
+      activeBounties: typeCounts['BOUNTY'] || 0,
+      activeHackathons: typeCounts['HACKATHON'] || 0,
+      activeProjects: typeCounts['PROJECT'] || 0,
+      activeGrants: typeCounts['GRANT'] || 0,
+      totalContributors: totalUsers,
     };
   }
 }

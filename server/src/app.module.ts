@@ -2,24 +2,22 @@ import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma.module';
 import { SenderMiddleware } from './sender.middleware';
-import { BountiesModule } from './bounties/bounties.module';
-import { ReputationModule } from './reputation/reputation.module';
+import { UsersModule } from './users/users.module';
+import { OrganizationsModule } from './organizations/organizations.module';
+import { ListingsModule } from './listings/listings.module';
 import { FundingPoolsModule } from './funding-pools/funding-pools.module';
 import { PeerAllocationModule } from './peer-allocation/peer-allocation.module';
-import { HackathonsModule } from './hackathons/hackathons.module';
-import { QuestsModule } from './quests/quests.module';
 import { StatsModule } from './stats/stats.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
-    BountiesModule,
-    ReputationModule,
+    UsersModule,
+    OrganizationsModule,
+    ListingsModule,
     FundingPoolsModule,
     PeerAllocationModule,
-    HackathonsModule,
-    QuestsModule,
     StatsModule,
   ],
 })
