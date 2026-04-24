@@ -1,6 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma.module';
+import { SenderMiddleware } from './sender.middleware';
 import { BountiesModule } from './bounties/bounties.module';
 import { ReputationModule } from './reputation/reputation.module';
 import { FundingPoolsModule } from './funding-pools/funding-pools.module';
@@ -22,4 +23,8 @@ import { StatsModule } from './stats/stats.module';
     StatsModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(SenderMiddleware).forRoutes('*path');
+  }
+}
