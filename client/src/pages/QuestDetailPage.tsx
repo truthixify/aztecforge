@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Scroll, User, DollarSign, Clock, Zap, CheckCircle } from 'lucide-react';
-import { quests } from '../lib/api';
+import { listings } from '../lib/api';
 import { MetadataGrid } from '../components/MetadataGrid';
 import { ProgressBar } from '../components/ProgressBar';
 import { DetailSkeleton } from '../components/Skeleton';
@@ -23,26 +23,26 @@ export function QuestDetailPage() {
   const [verifyForm, setVerifyForm] = useState({ completer: '', verificationUrl: '' });
   const [verifierAddr, setVerifierAddr] = useState('');
 
-  const { data: quest, isLoading } = useQuery({ queryKey: ['quests', questId], queryFn: () => quests.get(questId) });
-  const { data: completions = [] } = useQuery({ queryKey: ['quests', questId, 'completions'], queryFn: () => quests.completions(questId) });
+  const { data: quest, isLoading } = useQuery({ queryKey: ['quests', questId], queryFn: () => listings.get(questId) });
+  const { data: completions = [] } = useQuery({ queryKey: ['quests', questId, 'completions'], queryFn: () => listings.submissions(questId) });
 
   const completeMut = useMutation({
-    mutationFn: () => quests.complete(questId, verificationUrl),
+    mutationFn: () => listings.submit(questId, verificationUrl),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['quests', questId] }); setVerificationUrl(''); },
   });
 
   const verifyMut = useMutation({
-    mutationFn: () => quests.verify(questId, verifyForm),
+    mutationFn: () => listings.submit(questId, verifyForm),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['quests', questId] }); setVerifyForm({ completer: '', verificationUrl: '' }); },
   });
 
   const deactivateMut = useMutation({
-    mutationFn: () => quests.deactivate(questId),
+    mutationFn: () => listings.cancel(questId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['quests', questId] }),
   });
 
   const addVerifierMut = useMutation({
-    mutationFn: () => quests.addVerifier(questId, verifierAddr),
+    mutationFn: () => listings.updateNotes(questId, verifierAddr),
     onSuccess: () => setVerifierAddr(''),
   });
 

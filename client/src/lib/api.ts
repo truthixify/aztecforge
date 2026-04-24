@@ -5,7 +5,7 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Transform axios errors into readable messages
+// Transform errors into readable messages
 api.interceptors.response.use(
   (res) => res,
   (error) => {
@@ -15,12 +15,9 @@ api.interceptors.response.use(
       if (status === 502 || status === 503) {
         return Promise.reject(new Error('Server is not running. Start it with: cd server && pnpm start:dev'));
       }
-      if (status === 404) {
-        return Promise.reject(new Error(serverMsg || 'Not found'));
-      }
-      if (status === 400) {
-        return Promise.reject(new Error(serverMsg || 'Invalid request'));
-      }
+      if (status === 404) return Promise.reject(new Error(serverMsg || 'Not found'));
+      if (status === 400) return Promise.reject(new Error(serverMsg || 'Invalid request'));
+      if (status === 403) return Promise.reject(new Error(serverMsg || 'Permission denied'));
       return Promise.reject(new Error(serverMsg || `Server error (${status})`));
     }
     if (error.code === 'ERR_NETWORK') {
@@ -30,51 +27,97 @@ api.interceptors.response.use(
   },
 );
 
-// Attach sender address to every request
 export function setSender(address: string) {
   api.defaults.headers.common['x-sender'] = address;
 }
 
-// Bounties
-export const bounties = {
-  list: (params?: { status?: number; creator?: string }) =>
-    api.get('/bounties', { params }).then((r) => r.data),
-  get: (id: number) => api.get(`/bounties/${id}`).then((r) => r.data),
-  stats: () => api.get('/bounties/stats').then((r) => r.data),
+// ─── Users ───────────────────────────────────────────────
+
+export const users = {
+  me: () => api.get('/users/me').then((r) => r.data),
+  get: (wallet: string) => api.get(`/users/${wallet}`).then((r) => r.data),
+  leaderboard: (limit?: number) =>
+    api.get('/users/leaderboard', { params: { limit } }).then((r) => r.data),
+  updateProfile: (data: Record<string, unknown>) =>
+    api.patch('/users/me', data).then((r) => r.data),
+};
+
+// ─── Organizations ───────────────────────────────────────
+
+export const organizations = {
+  list: () => api.get('/organizations').then((r) => r.data),
+  get: (id: number) => api.get(`/organizations/${id}`).then((r) => r.data),
+  getBySlug: (slug: string) => api.get(`/organizations/slug/${slug}`).then((r) => r.data),
+  my: () => api.get('/organizations/my').then((r) => r.data),
+  create: (data: { name: string; slug: string; logo?: string; website?: string; description?: string; industry?: string; twitter?: string }) =>
+    api.post('/organizations', data).then((r) => r.data),
+  inviteMember: (orgId: number, walletAddress: string, role?: string) =>
+    api.post(`/organizations/${orgId}/members`, { walletAddress, role }).then((r) => r.data),
+  removeMember: (orgId: number, userId: number) =>
+    api.delete(`/organizations/${orgId}/members/${userId}`).then((r) => r.data),
+  updateMemberRole: (orgId: number, userId: number, role: string) =>
+    api.patch(`/organizations/${orgId}/members/${userId}/role`, { role }).then((r) => r.data),
+};
+
+// ─── Listings (bounties, projects, grants, hackathons) ───
+
+export const listings = {
+  list: (params?: { type?: string; status?: string; orgId?: number }) =>
+    api.get('/listings', { params }).then((r) => r.data),
+  get: (id: number) => api.get(`/listings/${id}`).then((r) => r.data),
+  getBySlug: (slug: string) => api.get(`/listings/slug/${slug}`).then((r) => r.data),
+  stats: () => api.get('/listings/stats').then((r) => r.data),
   create: (data: {
-    paymentToken: string;
-    rewardAmount: string;
+    orgId: number;
     title: string;
+    slug: string;
     description: string;
-    deadlineBlock: number;
-    isAmountPublic?: boolean;
+    type?: string;
+    compensationType?: string;
+    token?: string;
+    rewardAmount?: string;
+    rewards?: Record<string, number>;
+    maxWinners?: number;
+    maxBonusSpots?: number;
+    isRewardPublic?: boolean;
+    deadline: string;
+    announcementDate?: string;
     skills?: string[];
     difficulty?: string;
     acceptedFormats?: string[];
-  }) => api.post('/bounties', data).then((r) => r.data),
-  submissions: (id: number) => api.get(`/bounties/${id}/submissions`).then((r) => r.data),
-  submit: (id: number, data: { submissionUrl: string; notes?: string }) =>
-    api.post(`/bounties/${id}/submissions`, data).then((r) => r.data),
-  selectWinner: (id: number, subId: number) =>
-    api.patch(`/bounties/${id}/submissions/${subId}/select`).then((r) => r.data),
-  rejectSubmission: (id: number, subId: number) =>
-    api.patch(`/bounties/${id}/submissions/${subId}/reject`).then((r) => r.data),
-  closeSubmissions: (id: number) => api.patch(`/bounties/${id}/close-submissions`).then((r) => r.data),
-  cancel: (id: number) => api.patch(`/bounties/${id}/cancel`).then((r) => r.data),
+    tracks?: string[];
+    region?: string;
+  }) => api.post('/listings', data).then((r) => r.data),
+
+  // Status transitions
+  publish: (id: number) => api.patch(`/listings/${id}/publish`).then((r) => r.data),
+  closeSubmissions: (id: number) => api.patch(`/listings/${id}/close-submissions`).then((r) => r.data),
+  announceWinners: (id: number) => api.patch(`/listings/${id}/announce-winners`).then((r) => r.data),
+  complete: (id: number) => api.patch(`/listings/${id}/complete`).then((r) => r.data),
+  cancel: (id: number) => api.patch(`/listings/${id}/cancel`).then((r) => r.data),
+  extendDeadline: (id: number, deadline: string) =>
+    api.patch(`/listings/${id}/extend-deadline`, { deadline }).then((r) => r.data),
+
+  // Submissions
+  submissions: (id: number) => api.get(`/listings/${id}/submissions`).then((r) => r.data),
+  submit: (id: number, data: { link: string; tweet?: string; additionalInfo?: string; ask?: string }) =>
+    api.post(`/listings/${id}/submissions`, data).then((r) => r.data),
+
+  // Review (org-side)
+  updateLabel: (subId: number, label: string) =>
+    api.patch(`/listings/submissions/${subId}/label`, { label }).then((r) => r.data),
+  updateNotes: (subId: number, notes: string) =>
+    api.patch(`/listings/submissions/${subId}/notes`, { notes }).then((r) => r.data),
+  selectWinner: (subId: number, position: number, rewardAmount: string) =>
+    api.patch(`/listings/submissions/${subId}/select-winner`, { position, rewardAmount }).then((r) => r.data),
+  removeWinner: (subId: number) =>
+    api.patch(`/listings/submissions/${subId}/remove-winner`).then((r) => r.data),
+  markPaid: (subId: number, txHash: string) =>
+    api.patch(`/listings/submissions/${subId}/pay`, { txHash }).then((r) => r.data),
 };
 
-// Reputation
-export const reputation = {
-  list: () => api.get('/reputation').then((r) => r.data),
-  get: (address: string) => api.get(`/reputation/${address}`).then((r) => r.data),
-  leaderboard: (limit?: number) =>
-    api.get('/reputation/leaderboard', { params: { limit } }).then((r) => r.data),
-  stats: () => api.get('/reputation/stats').then((r) => r.data),
-  checkGate: (address: string, gateId: number) =>
-    api.get(`/reputation/${address}/gate/${gateId}`).then((r) => r.data),
-};
+// ─── Funding Pools ───────────────────────────────────────
 
-// Funding Pools
 export const pools = {
   list: () => api.get('/funding-pools').then((r) => r.data),
   get: (id: number) => api.get(`/funding-pools/${id}`).then((r) => r.data),
@@ -91,94 +134,30 @@ export const pools = {
   close: (id: number) => api.patch(`/funding-pools/${id}/close`).then((r) => r.data),
 };
 
-// Peer Allocation
+// ─── Peer Allocation Circles ─────────────────────────────
+
 export const circles = {
   list: () => api.get('/peer-allocation/circles').then((r) => r.data),
   get: (id: number) => api.get(`/peer-allocation/circles/${id}`).then((r) => r.data),
   members: (id: number) => api.get(`/peer-allocation/circles/${id}/members`).then((r) => r.data),
-  create: (data: {
-    name: string;
-    paymentToken: string;
-    epochDurationBlocks: number;
-    givePerMember: number;
-    rewardPoolPerEpoch: string;
-  }) => api.post('/peer-allocation/circles', data).then((r) => r.data),
+  create: (data: { name: string; paymentToken: string; epochDurationBlocks: number; givePerMember: number; rewardPoolPerEpoch: string }) =>
+    api.post('/peer-allocation/circles', data).then((r) => r.data),
   addMember: (id: number, member: string) =>
     api.post(`/peer-allocation/circles/${id}/members`, { member }).then((r) => r.data),
+  removeMember: (id: number, member: string) =>
+    api.delete(`/peer-allocation/circles/${id}/members/${member}`).then((r) => r.data),
   give: (id: number, data: { recipient: string; amount: number }) =>
     api.post(`/peer-allocation/circles/${id}/give`, data).then((r) => r.data),
   advanceEpoch: (id: number) =>
     api.patch(`/peer-allocation/circles/${id}/advance-epoch`).then((r) => r.data),
-  removeMember: (id: number, member: string) =>
-    api.delete(`/peer-allocation/circles/${id}/members/${member}`).then((r) => r.data),
   claimReward: (id: number, epoch: number) =>
     api.post(`/peer-allocation/circles/${id}/claim/${epoch}`).then((r) => r.data),
 };
 
-// Hackathons
-export const hackathons = {
-  list: () => api.get('/hackathons').then((r) => r.data),
-  get: (id: number) => api.get(`/hackathons/${id}`).then((r) => r.data),
-  teams: (id: number) => api.get(`/hackathons/${id}/teams`).then((r) => r.data),
-  submissions: (id: number) => api.get(`/hackathons/${id}/submissions`).then((r) => r.data),
-  create: (data: {
-    name: string;
-    description: string;
-    paymentToken: string;
-    totalPrizePool: string;
-    submissionDeadline: number;
-    judgingDeadline: number;
-    tracks: string[];
-  }) => api.post('/hackathons', data).then((r) => r.data),
-  registerTeam: (id: number, data: { teamName: string; members?: string[] }) =>
-    api.post(`/hackathons/${id}/teams`, data).then((r) => r.data),
-  submitProject: (id: number, data: {
-    teamId: number;
-    trackIndex: number;
-    projectName: string;
-    description: string;
-    repoUrl: string;
-    demoUrl?: string;
-  }) => api.post(`/hackathons/${id}/submissions`, data).then((r) => r.data),
-  score: (id: number, subId: number, data: { score: number; feedback?: string }) =>
-    api.post(`/hackathons/${id}/submissions/${subId}/score`, data).then((r) => r.data),
-  awardPrize: (id: number, data: { teamId: number; placement: number; prizeAmount: string }) =>
-    api.post(`/hackathons/${id}/prizes`, data).then((r) => r.data),
-  startBuilding: (id: number) => api.patch(`/hackathons/${id}/start-building`).then((r) => r.data),
-  startJudging: (id: number) => api.patch(`/hackathons/${id}/start-judging`).then((r) => r.data),
-  finalize: (id: number) => api.patch(`/hackathons/${id}/finalize`).then((r) => r.data),
-  addJudge: (id: number, judge: string) => api.post(`/hackathons/${id}/judges`, { judge }).then((r) => r.data),
-};
+// ─── Dashboard Stats ─────────────────────────────────────
 
-// Quests
-export const quests = {
-  list: (params?: { status?: number; creator?: string }) =>
-    api.get('/quests', { params }).then((r) => r.data),
-  get: (id: number) => api.get(`/quests/${id}`).then((r) => r.data),
-  stats: () => api.get('/quests/stats').then((r) => r.data),
-  completions: (id: number) => api.get(`/quests/${id}/completions`).then((r) => r.data),
-  create: (data: {
-    name: string;
-    description: string;
-    questType: number;
-    paymentToken: string;
-    rewardPerCompletion: string;
-    maxCompletions: number;
-    deadlineBlock: number;
-    reputationGateId?: number;
-  }) => api.post('/quests', data).then((r) => r.data),
-  complete: (id: number, verificationUrl: string) =>
-    api.post(`/quests/${id}/complete`, { verificationUrl }).then((r) => r.data),
-  verify: (id: number, data: { completer: string; verificationUrl: string }) =>
-    api.post(`/quests/${id}/verify`, data).then((r) => r.data),
-  deactivate: (id: number) => api.patch(`/quests/${id}/deactivate`).then((r) => r.data),
-  addVerifier: (id: number, verifier: string) =>
-    api.post(`/quests/${id}/verifiers`, { verifier }).then((r) => r.data),
+export const stats = {
+  dashboard: () => api.get('/stats').then((r) => r.data),
 };
 
 export default api;
-
-// Dashboard stats
-export const stats = {
-  dashboard: () => api.get("/stats").then((r) => r.data),
-};

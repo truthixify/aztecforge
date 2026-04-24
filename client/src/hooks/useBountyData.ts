@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useBountyBoard, hasContracts } from './useContracts';
 import { useContractCall } from './useContractCall';
 import { useAztec } from '../contexts/AztecContext';
-import { bounties as bountiesApi } from '../lib/api';
+import { listings as listingsApi } from '../lib/api';
 
 /**
  * Hook to read bounty data. Uses on-chain contract calls when contracts
@@ -30,7 +30,7 @@ export function useBountyStats() {
           totalValuePaid: String(paid),
         };
       }
-      return bountiesApi.stats();
+      return listingsApi.stats();
     },
   });
 }
@@ -47,7 +47,7 @@ export function useBountyCount() {
         const count = await contract.methods.get_bounty_count().simulate({ from: address });
         return Number(count);
       }
-      const list = await bountiesApi.list();
+      const list = await listingsApi.list();
       return list.length;
     },
   });
@@ -95,7 +95,7 @@ export function useBountyDetail(bountyId: number) {
           difficulty: 'medium',
         };
       }
-      return bountiesApi.get(bountyId);
+      return listingsApi.get(bountyId);
     },
   });
 }

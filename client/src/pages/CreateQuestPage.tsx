@@ -2,7 +2,7 @@ import { useToast } from "../components/Toast";
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { quests } from '../lib/api';
+import { listings } from '../lib/api';
 
 export function CreateQuestPage() {
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ export function CreateQuestPage() {
   });
 
   const mutation = useMutation({
-    mutationFn: () => quests.create(form),
+    mutationFn: () => listings.create(form),
     onSuccess: () => { toast.success('Quest created'); navigate('/quests'); },
   });
 

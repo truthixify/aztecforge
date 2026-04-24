@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Scroll, Zap, CheckCircle, DollarSign } from 'lucide-react';
-import { quests } from '../lib/api';
+import { listings } from '../lib/api';
 import { StatsSkeleton, ListSkeleton } from '../components/Skeleton';
 import { StatCard } from '../components/StatCard';
 import { QuestType, type Quest, type QuestStats } from '../types';
@@ -23,12 +23,12 @@ const questTypeColors: Record<QuestType, string> = {
 export function QuestsPage() {
   const { data: questList = [], isLoading } = useQuery<Quest[]>({
     queryKey: ['quests'],
-    queryFn: () => quests.list(),
+    queryFn: () => listings.list({ type: "BOUNTY" }),
   });
 
   const { data: stats, isLoading: statsLoading } = useQuery<QuestStats>({
     queryKey: ['quests', 'stats'],
-    queryFn: () => quests.stats(),
+    queryFn: () => listings.stats(),
   });
 
   return (

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Star, Hammer, Trophy, Coins, Scroll, Users, Gift, CheckCircle } from 'lucide-react';
-import { reputation } from '../lib/api';
+import { users } from '../lib/api';
 import { TierBadge } from '../components/StatusBadge';
 import { DetailSkeleton } from '../components/Skeleton';
 import type { ContributorReputation } from '../types';
@@ -14,13 +14,13 @@ export function ReputationDetailPage() {
 
   const { data: rep, isLoading, error } = useQuery<ContributorReputation>({
     queryKey: ['reputation', address],
-    queryFn: () => reputation.get(address!),
+    queryFn: () => users.get(address!),
     enabled: !!address,
   });
 
   const checkGate = async () => {
     if (!address || !gateId) return;
-    const result = await reputation.checkGate(address, Number(gateId));
+    const result = await users.get(address, Number(gateId));
     setGateResult(result.passes);
   };
 

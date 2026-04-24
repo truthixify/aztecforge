@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Clock, User, DollarSign, ExternalLink, Check, X as XIcon } from 'lucide-react';
-import { bounties } from '../lib/api';
+import { listings } from '../lib/api';
 import { useToast } from '../components/Toast';
 import { DetailSkeleton } from '../components/Skeleton';
 
@@ -29,33 +29,33 @@ export function BountyDetailPage() {
 
   const { data: bounty, isLoading } = useQuery({
     queryKey: ['bounties', bountyId],
-    queryFn: () => bounties.get(bountyId),
+    queryFn: () => listings.get(bountyId),
   });
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['bounties'] });
 
   const submitMut = useMutation({
-    mutationFn: () => bounties.submit(bountyId, { submissionUrl: submitUrl, notes: submitNotes }),
+    mutationFn: () => listings.submit(bountyId, { submissionUrl: submitUrl, notes: submitNotes }),
     onSuccess: () => { toast.success('Submission sent'); setSubmitUrl(''); setSubmitNotes(''); invalidate(); },
   });
 
   const selectWinnerMut = useMutation({
-    mutationFn: (subId: number) => bounties.selectWinner(bountyId, subId),
+    mutationFn: (subId: number) => listings.selectWinner(bountyId, subId),
     onSuccess: () => { toast.success('Winner selected and paid'); invalidate(); },
   });
 
   const rejectSubMut = useMutation({
-    mutationFn: (subId: number) => bounties.rejectSubmission(bountyId, subId),
+    mutationFn: (subId: number) => listings.updateLabel(bountyId, subId),
     onSuccess: () => { toast.success('Submission rejected'); invalidate(); },
   });
 
   const closeSubsMut = useMutation({
-    mutationFn: () => bounties.closeSubmissions(bountyId),
+    mutationFn: () => listings.closeSubmissions(bountyId),
     onSuccess: () => { toast.success('Submissions closed'); invalidate(); },
   });
 
   const cancelMut = useMutation({
-    mutationFn: () => bounties.cancel(bountyId),
+    mutationFn: () => listings.cancel(bountyId),
     onSuccess: () => { toast.success('Bounty cancelled'); invalidate(); },
   });
 

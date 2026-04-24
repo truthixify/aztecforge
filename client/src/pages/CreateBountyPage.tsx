@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { bounties } from '../lib/api';
+import { listings } from '../lib/api';
 import { useToast } from '../components/Toast';
 
 const SUBMISSION_FORMATS = [
@@ -32,7 +32,7 @@ export function CreateBountyPage() {
 
   const mutation = useMutation({
     mutationFn: () =>
-      bounties.create({
+      listings.create({
         ...form,
         skills: form.skills ? form.skills.split(',').map((s) => s.trim()).filter(Boolean) : [],
         acceptedFormats: form.acceptedFormats,

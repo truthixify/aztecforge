@@ -19,7 +19,7 @@ export function CreateHackathonPage() {
 
   const mutation = useMutation({
     mutationFn: () =>
-      hackathons.create({
+      listings.create({
         ...form,
         tracks: form.tracks.split(',').map((t) => t.trim()).filter(Boolean),
       }),

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Hammer, Clock, EyeOff, Plus, FileText } from 'lucide-react';
-import { bounties } from '../lib/api';
+import { listings } from '../lib/api';
 import { StatsSkeleton, ListSkeleton } from '../components/Skeleton';
 import { StatCard } from '../components/StatCard';
 import type { Bounty, BountyStats } from '../types';
@@ -22,12 +22,12 @@ const BOUNTY_STATUS: Record<number, { label: string; color: string }> = {
 export function BountiesPage() {
   const { data: bountyList = [], isLoading } = useQuery<Bounty[]>({
     queryKey: ['bounties'],
-    queryFn: () => bounties.list(),
+    queryFn: () => listings.list({ type: "BOUNTY" }),
   });
 
   const { data: stats, isLoading: statsLoading } = useQuery<BountyStats>({
     queryKey: ['bounties', 'stats'],
-    queryFn: () => bounties.stats(),
+    queryFn: () => listings.stats(),
   });
 
   return (

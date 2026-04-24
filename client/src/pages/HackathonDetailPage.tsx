@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Trophy, Users, FileText, DollarSign, User, Clock } from 'lucide-react';
-import { hackathons } from '../lib/api';
+import { listings } from '../lib/api';
 import { HackathonStatusBadge } from '../components/StatusBadge';
 import { MetadataGrid } from '../components/MetadataGrid';
 import { Tabs } from '../components/Tabs';
@@ -19,27 +19,27 @@ export function HackathonDetailPage() {
   const [scoreForm, setScoreForm] = useState<{ subId: number | null; score: number }>({ subId: null, score: 80 });
   const [prizeForm, setPrizeForm] = useState({ teamId: 0, placement: 1, prizeAmount: '' });
 
-  const { data: hack, isLoading } = useQuery({ queryKey: ['hackathons', hackId], queryFn: () => hackathons.get(hackId) });
-  const { data: teams = [] } = useQuery({ queryKey: ['hackathons', hackId, 'teams'], queryFn: () => hackathons.teams(hackId) });
-  const { data: submissions = [] } = useQuery({ queryKey: ['hackathons', hackId, 'submissions'], queryFn: () => hackathons.submissions(hackId) });
+  const { data: hack, isLoading } = useQuery({ queryKey: ['hackathons', hackId], queryFn: () => listings.get(hackId) });
+  const { data: teams = [] } = useQuery({ queryKey: ['hackathons', hackId, 'teams'], queryFn: () => listings.submissions(hackId) });
+  const { data: submissions = [] } = useQuery({ queryKey: ['hackathons', hackId, 'submissions'], queryFn: () => listings.submissions(hackId) });
 
   const registerTeam = useMutation({
-    mutationFn: () => hackathons.registerTeam(hackId, { teamName }),
+    mutationFn: () => listings.submit(hackId, { teamName }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['hackathons', hackId] }); setTeamName(''); },
   });
   const submitProject = useMutation({
-    mutationFn: () => hackathons.submitProject(hackId, { ...submitForm, teamId: teams[0]?.teamId ?? 0 }),
+    mutationFn: () => listings.submit(hackId, { ...submitForm, teamId: teams[0]?.teamId ?? 0 }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['hackathons', hackId] }); setSubmitForm({ trackIndex: 0, projectName: '', description: '', repoUrl: '', demoUrl: '' }); },
   });
   const scoreSub = useMutation({
-    mutationFn: () => hackathons.score(hackId, scoreForm.subId!, { score: scoreForm.score }),
+    mutationFn: () => listings.updateLabel(hackId, scoreForm.subId!, { score: scoreForm.score }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['hackathons', hackId, 'submissions'] }); setScoreForm({ subId: null, score: 80 }); },
   });
-  const startBuilding = useMutation({ mutationFn: () => hackathons.startBuilding(hackId), onSuccess: () => qc.invalidateQueries({ queryKey: ['hackathons', hackId] }) });
-  const startJudging = useMutation({ mutationFn: () => hackathons.startJudging(hackId), onSuccess: () => qc.invalidateQueries({ queryKey: ['hackathons', hackId] }) });
-  const finalize = useMutation({ mutationFn: () => hackathons.finalize(hackId), onSuccess: () => qc.invalidateQueries({ queryKey: ['hackathons', hackId] }) });
+  const startBuilding = useMutation({ mutationFn: () => listings.closeSubmissions(hackId), onSuccess: () => qc.invalidateQueries({ queryKey: ['hackathons', hackId] }) });
+  const startJudging = useMutation({ mutationFn: () => listings.closeSubmissions(hackId), onSuccess: () => qc.invalidateQueries({ queryKey: ['hackathons', hackId] }) });
+  const finalize = useMutation({ mutationFn: () => listings.announceWinners(hackId), onSuccess: () => qc.invalidateQueries({ queryKey: ['hackathons', hackId] }) });
   const awardPrize = useMutation({
-    mutationFn: () => hackathons.awardPrize(hackId, prizeForm),
+    mutationFn: () => listings.selectWinner(hackId, prizeForm),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['hackathons', hackId] }); setPrizeForm({ teamId: 0, placement: 1, prizeAmount: '' }); },
   });
 
