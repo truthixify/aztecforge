@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Coins, Users, ArrowDown, ArrowUp } from 'lucide-react';
 import { pools } from '../lib/api';
+import { StatsSkeleton, ListSkeleton } from '../components/Skeleton';
 import { StatCard } from '../components/StatCard';
 import { PoolType, type FundingPool } from '../types';
 
@@ -13,12 +14,12 @@ const poolTypeLabels: Record<PoolType, string> = {
 };
 
 export function PoolsPage() {
-  const { data: poolList = [] } = useQuery<FundingPool[]>({
+  const { data: poolList = [], isLoading } = useQuery<FundingPool[]>({
     queryKey: ['pools'],
     queryFn: () => pools.list(),
   });
 
-  const { data: stats } = useQuery<{ totalPoolsCreated: number; totalValueDeposited: string; totalValueDisbursed: string }>({
+  const { data: stats, isLoading: statsLoading } = useQuery<{ totalPoolsCreated: number; totalValueDeposited: string; totalValueDisbursed: string }>({
     queryKey: ['pools', 'stats'],
     queryFn: () => pools.stats(),
   });

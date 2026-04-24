@@ -2,11 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Trophy, Users, FileText, DollarSign } from 'lucide-react';
 import { hackathons } from '../lib/api';
+import { ListSkeleton } from '../components/Skeleton';
 import { HackathonStatusBadge } from '../components/StatusBadge';
 import type { Hackathon } from '../types';
 
 export function HackathonsPage() {
-  const { data: hackathonList = [] } = useQuery<Hackathon[]>({
+  const { data: hackathonList = [], isLoading } = useQuery<Hackathon[]>({
     queryKey: ['hackathons'],
     queryFn: () => hackathons.list(),
   });

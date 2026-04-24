@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Hammer, Clock, EyeOff, Plus, FileText } from 'lucide-react';
 import { bounties } from '../lib/api';
+import { StatsSkeleton, ListSkeleton } from '../components/Skeleton';
 import { StatCard } from '../components/StatCard';
 import type { Bounty, BountyStats } from '../types';
 
@@ -19,12 +20,12 @@ const BOUNTY_STATUS: Record<number, { label: string; color: string }> = {
 };
 
 export function BountiesPage() {
-  const { data: bountyList = [] } = useQuery<Bounty[]>({
+  const { data: bountyList = [], isLoading } = useQuery<Bounty[]>({
     queryKey: ['bounties'],
     queryFn: () => bounties.list(),
   });
 
-  const { data: stats } = useQuery<BountyStats>({
+  const { data: stats, isLoading: statsLoading } = useQuery<BountyStats>({
     queryKey: ['bounties', 'stats'],
     queryFn: () => bounties.stats(),
   });
@@ -47,7 +48,7 @@ export function BountiesPage() {
       </div>
 
       {/* Stats */}
-      {stats && (
+      {statsLoading ? <StatsSkeleton count={4} /> : stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard label="Posted" value={stats.totalBountiesPosted} />
           <StatCard label="Completed" value={stats.totalBountiesCompleted} />
@@ -57,7 +58,7 @@ export function BountiesPage() {
       )}
 
       {/* List */}
-      <div className="space-y-2">
+      {isLoading ? <ListSkeleton count={4} /> : <div className="space-y-2">
         {bountyList.length === 0 ? (
           <div className="text-center py-16 border border-dashed border-gray-800 rounded-xl">
             <Hammer className="w-10 h-10 mx-auto text-gray-600 mb-3" />
@@ -130,7 +131,7 @@ export function BountiesPage() {
             </Link>
           ))
         )}
-      </div>
+      </div>}
     </div>
   );
 }

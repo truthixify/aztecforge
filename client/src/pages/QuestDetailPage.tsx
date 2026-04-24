@@ -5,7 +5,7 @@ import { ArrowLeft, Scroll, User, DollarSign, Clock, Zap, CheckCircle } from 'lu
 import { quests } from '../lib/api';
 import { MetadataGrid } from '../components/MetadataGrid';
 import { ProgressBar } from '../components/ProgressBar';
-import { ListSkeleton } from '../components/Skeleton';
+import { DetailSkeleton } from '../components/Skeleton';
 import { QuestType } from '../types';
 
 const questTypeLabels: Record<QuestType, string> = {
@@ -46,7 +46,7 @@ export function QuestDetailPage() {
     onSuccess: () => setVerifierAddr(''),
   });
 
-  if (isLoading || !quest) return <ListSkeleton count={2} />;
+  if (isLoading || !quest) return <DetailSkeleton />;
 
   const isUnlimited = quest.maxCompletions === 0;
 

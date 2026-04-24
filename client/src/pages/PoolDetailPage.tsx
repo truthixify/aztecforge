@@ -5,7 +5,7 @@ import { ArrowLeft, Coins, User, DollarSign, ArrowDown, ArrowUp, Users } from 'l
 import { pools } from '../lib/api';
 import { MetadataGrid } from '../components/MetadataGrid';
 import { ProgressBar } from '../components/ProgressBar';
-import { ListSkeleton } from '../components/Skeleton';
+import { DetailSkeleton } from '../components/Skeleton';
 import { PoolType } from '../types';
 
 const poolTypeLabels: Record<PoolType, string> = {
@@ -49,7 +49,7 @@ export function PoolDetailPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['pools', poolId] }),
   });
 
-  if (isLoading || !pool) return <ListSkeleton count={2} />;
+  if (isLoading || !pool) return <DetailSkeleton />;
 
   const deposited = Number(pool.totalDeposited);
   const disbursed = Number(pool.totalDisbursed);

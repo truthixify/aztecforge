@@ -2,10 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Users, Gift, BarChart3 } from 'lucide-react';
 import { circles } from '../lib/api';
+import { ListSkeleton } from '../components/Skeleton';
 import type { Circle } from '../types';
 
 export function CirclesPage() {
-  const { data: circleList = [] } = useQuery<Circle[]>({
+  const { data: circleList = [], isLoading } = useQuery<Circle[]>({
     queryKey: ['circles'],
     queryFn: () => circles.list(),
   });

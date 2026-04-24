@@ -5,7 +5,7 @@ import { ArrowLeft, Users, Gift, BarChart3, User, DollarSign, Plus, Trash2 } fro
 import { circles } from '../lib/api';
 import { MetadataGrid } from '../components/MetadataGrid';
 import { ProgressBar } from '../components/ProgressBar';
-import { ListSkeleton } from '../components/Skeleton';
+import { DetailSkeleton } from '../components/Skeleton';
 
 export function CircleDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -52,7 +52,7 @@ export function CircleDetailPage() {
     },
   });
 
-  if (isLoading || !circle) return <ListSkeleton count={2} />;
+  if (isLoading || !circle) return <DetailSkeleton />;
 
   const totalGiveAllocated = Object.values(giveAllocations).reduce((s, v) => s + v, 0);
   const giveRemaining = circle.givePerMember - totalGiveAllocated;

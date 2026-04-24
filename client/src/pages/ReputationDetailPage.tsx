@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Star, Hammer, Trophy, Coins, Scroll, Users, Gift, CheckCircle } from 'lucide-react';
 import { reputation } from '../lib/api';
 import { TierBadge } from '../components/StatusBadge';
-import { ListSkeleton } from '../components/Skeleton';
+import { DetailSkeleton } from '../components/Skeleton';
 import type { ContributorReputation } from '../types';
 
 export function ReputationDetailPage() {
@@ -24,7 +24,7 @@ export function ReputationDetailPage() {
     setGateResult(result.passes);
   };
 
-  if (isLoading) return <ListSkeleton count={2} />;
+  if (isLoading) return <DetailSkeleton />;
   if (error || !rep) {
     return (
       <div className="max-w-3xl mx-auto">

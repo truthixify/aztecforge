@@ -2,18 +2,19 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Star } from 'lucide-react';
 import { reputation } from '../lib/api';
+import { StatsSkeleton, TableSkeleton } from '../components/Skeleton';
 import { TierBadge } from '../components/StatusBadge';
 import { StatCard } from '../components/StatCard';
 import type { ContributorReputation } from '../types';
 
 export function ReputationPage() {
   const navigate = useNavigate();
-  const { data: leaderboard = [] } = useQuery<ContributorReputation[]>({
+  const { data: leaderboard = [], isLoading } = useQuery<ContributorReputation[]>({
     queryKey: ['reputation', 'leaderboard'],
     queryFn: () => reputation.leaderboard(20),
   });
 
-  const { data: stats } = useQuery<{ totalContributors: number }>({
+  const { data: stats, isLoading: statsLoading } = useQuery<{ totalContributors: number }>({
     queryKey: ['reputation', 'stats'],
     queryFn: () => reputation.stats(),
   });

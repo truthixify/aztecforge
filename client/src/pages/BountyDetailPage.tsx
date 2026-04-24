@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Clock, User, DollarSign, ExternalLink, Check, X as XIcon } from 'lucide-react';
 import { bounties } from '../lib/api';
 import { useToast } from '../components/Toast';
+import { DetailSkeleton } from '../components/Skeleton';
 
 const STATUS_LABELS: Record<number, { label: string; color: string }> = {
   0: { label: 'Open', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
@@ -58,7 +59,7 @@ export function BountyDetailPage() {
     onSuccess: () => { toast.success('Bounty cancelled'); invalidate(); },
   });
 
-  if (isLoading || !bounty) return <div className="text-gray-500">Loading...</div>;
+  if (isLoading || !bounty) return <DetailSkeleton />;
 
   const statusCfg = STATUS_LABELS[bounty.status] ?? STATUS_LABELS[0];
   const isOpen = bounty.status === 0;

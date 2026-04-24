@@ -6,7 +6,7 @@ import { hackathons } from '../lib/api';
 import { HackathonStatusBadge } from '../components/StatusBadge';
 import { MetadataGrid } from '../components/MetadataGrid';
 import { Tabs } from '../components/Tabs';
-import { ListSkeleton } from '../components/Skeleton';
+import { DetailSkeleton } from '../components/Skeleton';
 import { HackathonStatus } from '../types';
 
 export function HackathonDetailPage() {
@@ -43,7 +43,7 @@ export function HackathonDetailPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['hackathons', hackId] }); setPrizeForm({ teamId: 0, placement: 1, prizeAmount: '' }); },
   });
 
-  if (isLoading || !hack) return <ListSkeleton count={2} />;
+  if (isLoading || !hack) return <DetailSkeleton />;
 
   const tabItems = [
     { id: 'teams', label: 'Teams', count: teams.length },
