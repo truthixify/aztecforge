@@ -33,7 +33,7 @@ export function WalletButton() {
         <button
           onClick={() => setOpen((x) => !x)}
           disabled={isConnecting}
-          className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-[var(--accent-600)] hover:bg-[var(--accent-500)] text-white transition-colors disabled:opacity-60"
+          className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-[var(--accent-600)] hover:bg-[var(--accent-500)] text-white transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isConnecting ? (
             <div className="w-3.5 h-3.5 border-2 border-current border-r-transparent rounded-full animate-spin" />
@@ -86,7 +86,7 @@ export function WalletButton() {
     <div ref={ref} className="relative w-full">
       <button
         onClick={() => setOpen((x) => !x)}
-        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-[var(--bg-1)] border border-[var(--line)] hover:border-[var(--bg-3)] transition-colors text-left"
+        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-[var(--bg-1)] border border-[var(--line)] hover:border-[var(--bg-3)] transition-colors text-left cursor-pointer"
       >
         <div className="w-7 h-7 rounded-md bg-gradient-to-br from-[var(--accent-500)] to-[var(--accent-700)] flex items-center justify-center shrink-0">
           <span className="w-1.5 h-1.5 rounded-full bg-green-300" />
