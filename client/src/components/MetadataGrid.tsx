@@ -1,7 +1,7 @@
-import type { ComponentType } from 'react';
+import type { ReactNode } from 'react';
 
 interface MetadataItem {
-  icon?: ComponentType<{ className?: string }>;
+  icon?: ReactNode;
   label: string;
   value: string | number;
   mono?: boolean;
@@ -17,7 +17,7 @@ export function MetadataGrid({ items }: MetadataGridProps) {
       {items.map((item) => (
         <div key={item.label} className="min-w-0">
           <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-gray-500 mb-1">
-            {item.icon && <item.icon className="w-3 h-3" />}
+            {item.icon}
             {item.label}
           </div>
           <div className={`text-sm text-gray-200 truncate ${item.mono ? 'font-mono' : ''}`}>
