@@ -12,11 +12,13 @@ const DIFFICULTY_DOT: Record<string, string> = {
   hard: 'bg-red-400',
 };
 
-const BOUNTY_STATUS: Record<number, { label: string; color: string }> = {
-  0: { label: 'Open', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
-  1: { label: 'Reviewing', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-  2: { label: 'Completed', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
-  3: { label: 'Cancelled', color: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
+const BOUNTY_STATUS: Record<string, { label: string; color: string }> = {
+  DRAFT: { label: 'Draft', color: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
+  OPEN: { label: 'Open', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
+  REVIEW: { label: 'Reviewing', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
+  CLOSED: { label: 'Winners Announced', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+  COMPLETED: { label: 'Completed', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+  CANCELLED: { label: 'Cancelled', color: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
 };
 
 export function BountiesPage() {
@@ -81,7 +83,7 @@ export function BountiesPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2.5 mb-1.5">
                     <h3 className="text-[15px] font-semibold text-white tracking-tight truncate">{bounty.title}</h3>
-                    {(() => { const s = BOUNTY_STATUS[bounty.status] ?? BOUNTY_STATUS[0]; return (
+                    {(() => { const s = BOUNTY_STATUS[bounty.status] ?? BOUNTY_STATUS.OPEN; return (
                       <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border ${s.color}`}>
                         <span className="w-1.5 h-1.5 rounded-full bg-current" />{s.label}
                       </span>
@@ -108,7 +110,7 @@ export function BountiesPage() {
                     )}
                     <span className="flex items-center gap-1 text-xs text-gray-500">
                       <Clock className="w-3 h-3" />
-                      Block {bounty.deadline}
+                      {bounty.deadline ? new Date(bounty.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'No deadline'}
                     </span>
                   </div>
                 </div>

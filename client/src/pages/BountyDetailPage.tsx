@@ -6,11 +6,13 @@ import { listings } from '../lib/api';
 import { useToast } from '../components/Toast';
 import { DetailSkeleton } from '../components/Skeleton';
 
-const STATUS_LABELS: Record<number, { label: string; color: string }> = {
-  0: { label: 'Open', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
-  1: { label: 'Reviewing', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-  2: { label: 'Completed', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
-  3: { label: 'Cancelled', color: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
+const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  DRAFT: { label: 'Draft', color: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
+  OPEN: { label: 'Open', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
+  REVIEW: { label: 'Reviewing', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
+  CLOSED: { label: 'Winners Announced', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+  COMPLETED: { label: 'Completed', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+  CANCELLED: { label: 'Cancelled', color: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
 };
 
 const SUB_STATUS: Record<number, { label: string; color: string }> = {
@@ -35,17 +37,17 @@ export function BountyDetailPage() {
   const invalidate = () => qc.invalidateQueries({ queryKey: ['bounties'] });
 
   const submitMut = useMutation({
-    mutationFn: () => listings.submit(bountyId, { submissionUrl: submitUrl, notes: submitNotes }),
+    mutationFn: () => listings.submit(bountyId, { link: submitUrl, additionalInfo: submitNotes }),
     onSuccess: () => { toast.success('Submission sent'); setSubmitUrl(''); setSubmitNotes(''); invalidate(); },
   });
 
   const selectWinnerMut = useMutation({
-    mutationFn: (subId: number) => listings.selectWinner(bountyId, subId),
-    onSuccess: () => { toast.success('Winner selected and paid'); invalidate(); },
+    mutationFn: (subId: number) => listings.selectWinner(subId, 1, bounty?.rewardAmount ?? '0'),
+    onSuccess: () => { toast.success('Winner selected'); invalidate(); },
   });
 
   const rejectSubMut = useMutation({
-    mutationFn: (subId: number) => listings.updateLabel(bountyId, subId),
+    mutationFn: (subId: number) => listings.updateLabel(subId, 'SPAM'),
     onSuccess: () => { toast.success('Submission rejected'); invalidate(); },
   });
 
@@ -61,10 +63,10 @@ export function BountyDetailPage() {
 
   if (isLoading || !bounty) return <DetailSkeleton />;
 
-  const statusCfg = STATUS_LABELS[bounty.status] ?? STATUS_LABELS[0];
-  const isOpen = bounty.status === 0;
-  const isReviewing = bounty.status === 1;
-  const isCompleted = bounty.status === 2;
+  const statusCfg = STATUS_LABELS[bounty.status] ?? STATUS_LABELS.OPEN;
+  const isOpen = bounty.status === 'OPEN';
+  const isReviewing = bounty.status === 'REVIEW';
+  const isCompleted = bounty.status === 'COMPLETED' || bounty.status === 'CLOSED';
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -125,7 +127,7 @@ export function BountyDetailPage() {
           </div>
           <div>
             <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-gray-500 mb-1"><Clock className="w-3 h-3" /> Deadline</div>
-            <div className="text-sm text-gray-200">Block {bounty.deadline}</div>
+            <div className="text-sm text-gray-200">{bounty.deadline ? new Date(bounty.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No deadline'}</div>
           </div>
           <div>
             <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-gray-500 mb-1"><DollarSign className="w-3 h-3" /> Escrow</div>
@@ -168,22 +170,24 @@ export function BountyDetailPage() {
           <p className="text-gray-500 text-sm py-4">No submissions yet.</p>
         ) : (
           <div className="space-y-3">
-            {bounty.submissions.map((sub: { id: number; submitter: string; submissionUrl: string; notes: string; status: number }) => {
-              const subCfg = SUB_STATUS[sub.status] ?? SUB_STATUS[0];
+            {bounty.submissions.map((sub: { id: number; user?: { walletAddress: string; displayName?: string }; link: string; additionalInfo?: string; status: string; label: string; isWinner: boolean; winnerPosition?: number }) => {
+              const displayName = sub.user?.displayName || sub.user?.walletAddress?.slice(0, 10) || 'Unknown';
+              const statusKey = sub.isWinner ? 'winner' : sub.status === 'REJECTED' ? 'rejected' : 'pending';
+              const subCfg = SUB_STATUS[statusKey === 'winner' ? 1 : statusKey === 'rejected' ? 2 : 0] ?? SUB_STATUS[0];
               return (
                 <div key={sub.id} className="border border-[var(--line)] rounded-lg p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-mono text-xs text-gray-300">{sub.submitter.slice(0, 10)}...</span>
+                        <span className="font-mono text-xs text-gray-300">{displayName}...</span>
                         <span className={`text-[11px] font-medium ${subCfg.color}`}>{subCfg.label}</span>
                       </div>
-                      {sub.notes && <p className="text-sm text-gray-400 mb-2">{sub.notes}</p>}
-                      <a href={sub.submissionUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-[var(--accent-400)] hover:underline">
-                        <ExternalLink className="w-3 h-3" /> {sub.submissionUrl}
+                      {sub.additionalInfo && <p className="text-sm text-gray-400 mb-2">{sub.additionalInfo}</p>}
+                      <a href={sub.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-[var(--accent-400)] hover:underline">
+                        <ExternalLink className="w-3 h-3" /> {sub.link}
                       </a>
                     </div>
-                    {sub.status === 0 && (isOpen || isReviewing) && (
+                    {sub.status === 'PENDING' && !sub.isWinner && (isOpen || isReviewing) && (
                       <div className="flex gap-2 shrink-0">
                         <button onClick={() => selectWinnerMut.mutate(sub.id)} disabled={selectWinnerMut.isPending}
                           className="p-1.5 rounded-md bg-green-600/10 text-green-400 hover:bg-green-600/20 cursor-pointer" title="Select as winner">
@@ -195,7 +199,7 @@ export function BountyDetailPage() {
                         </button>
                       </div>
                     )}
-                    {sub.status === 1 && (
+                    {sub.isWinner && (
                       <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">Winner</span>
                     )}
                   </div>

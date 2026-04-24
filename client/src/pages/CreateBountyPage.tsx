@@ -21,9 +21,8 @@ export function CreateBountyPage() {
   const [form, setForm] = useState({
     title: '',
     description: '',
-    paymentToken: '0x0000000000000000000000000000000000000001',
     rewardAmount: '',
-    deadlineBlock: 100000,
+    deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2 weeks from now
     isAmountPublic: true,
     skills: '',
     difficulty: 'medium',
@@ -33,8 +32,16 @@ export function CreateBountyPage() {
   const mutation = useMutation({
     mutationFn: () =>
       listings.create({
-        ...form,
+        orgId: 1, // TODO: select from user's orgs
+        title: form.title,
+        slug: form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+        description: form.description,
+        type: 'BOUNTY',
+        rewardAmount: form.rewardAmount,
+        isRewardPublic: form.isAmountPublic,
+        deadline: new Date(form.deadline).toISOString(),
         skills: form.skills ? form.skills.split(',').map((s) => s.trim()).filter(Boolean) : [],
+        difficulty: form.difficulty,
         acceptedFormats: form.acceptedFormats,
       }),
     onSuccess: (data) => { toast.success('Bounty created', data.title); navigate(`/bounties/${data.id}`); },
@@ -80,8 +87,8 @@ export function CreateBountyPage() {
               className={inputCls} placeholder="5000" />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-300 mb-1.5 block">Deadline (block #)</label>
-            <input type="number" value={form.deadlineBlock} onChange={(e) => update('deadlineBlock', Number(e.target.value))}
+            <label className="text-sm font-medium text-gray-300 mb-1.5 block">Deadline</label>
+            <input type="date" value={form.deadline} onChange={(e) => update('deadline', e.target.value)}
               className={inputCls} />
           </div>
         </div>
