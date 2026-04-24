@@ -59,7 +59,7 @@ export function QuestDetailPage() {
         <ArrowLeft className="w-4 h-4" /> Back to Quests
       </Link>
 
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 mb-6">
+      <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-8 mb-6">
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -96,7 +96,7 @@ export function QuestDetailPage() {
       </div>
 
       {/* Completions */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+      <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-6 mb-6">
         <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <CheckCircle className="w-5 h-5 text-green-400" /> Completions ({completions.length})
         </h2>
@@ -117,11 +117,11 @@ export function QuestDetailPage() {
       {/* Actions */}
       <div className="space-y-4">
         {quest.status === 0 && quest.questType === 0 && (
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-6">
             <h3 className="text-sm font-medium text-white mb-3">Complete This Quest</h3>
             <div className="flex gap-3">
               <input value={verificationUrl} onChange={(e) => setVerificationUrl(e.target.value)} placeholder="Verification URL or proof"
-                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500" />
+                className="flex-1 bg-gray-800 border border-[var(--line)] rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[var(--accent-500)]" />
               <button onClick={() => completeMut.mutate()} disabled={!verificationUrl || completeMut.isPending}
                 className="bg-green-600 hover:bg-green-700 disabled:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
                 {completeMut.isPending ? 'Completing...' : 'Complete'}
@@ -131,26 +131,26 @@ export function QuestDetailPage() {
         )}
 
         {quest.status === 0 && quest.questType !== 0 && (
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-6">
             <h3 className="text-sm font-medium text-white mb-3">Verify a Completion (Verifier Only)</h3>
             <div className="space-y-3">
               <input value={verifyForm.completer} onChange={(e) => setVerifyForm((p) => ({ ...p, completer: e.target.value }))} placeholder="Completer address"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500" />
+                className="w-full bg-gray-800 border border-[var(--line)] rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[var(--accent-500)]" />
               <div className="flex gap-3">
                 <input value={verifyForm.verificationUrl} onChange={(e) => setVerifyForm((p) => ({ ...p, verificationUrl: e.target.value }))} placeholder="Verification URL"
-                  className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500" />
+                  className="flex-1 bg-gray-800 border border-[var(--line)] rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[var(--accent-500)]" />
                 <button onClick={() => verifyMut.mutate()} disabled={!verifyForm.completer || !verifyForm.verificationUrl}
-                  className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Verify</button>
+                  className="bg-[var(--accent-600)] hover:bg-[var(--accent-500)] disabled:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Verify</button>
               </div>
             </div>
           </div>
         )}
 
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+        <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-6">
           <h3 className="text-sm font-medium text-white mb-3">Creator Controls</h3>
           <div className="flex gap-3 mb-3">
             <input value={verifierAddr} onChange={(e) => setVerifierAddr(e.target.value)} placeholder="Verifier address"
-              className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500" />
+              className="flex-1 bg-gray-800 border border-[var(--line)] rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[var(--accent-500)]" />
             <button onClick={() => addVerifierMut.mutate()} disabled={!verifierAddr}
               className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Add Verifier</button>
           </div>

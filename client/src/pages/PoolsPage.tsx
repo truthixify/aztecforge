@@ -27,12 +27,12 @@ export function PoolsPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white">Funding Pools</h1>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Funding Pools</h1>
           <p className="text-gray-400 mt-1">Community-funded pools for ecosystem growth</p>
         </div>
         <Link
           to="/pools/new"
-          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          className="bg-[var(--accent-600)] hover:bg-[var(--accent-500)] text-white px-4 py-2 rounded-lg font-medium transition-colors"
         >
           Create Pool
         </Link>
@@ -40,9 +40,9 @@ export function PoolsPage() {
 
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <StatCard label="Total Pools" value={stats.totalPoolsCreated} icon={<Coins className="w-4 h-4" />} />
-          <StatCard label="Total Deposited" value={`${stats.totalValueDeposited} USDC`} icon={<ArrowDown className="w-4 h-4" />} />
-          <StatCard label="Total Disbursed" value={`${stats.totalValueDisbursed} USDC`} icon={<ArrowUp className="w-4 h-4" />} />
+          <StatCard label="Total Pools" value={stats.totalPoolsCreated} />
+          <StatCard label="Total Deposited" value={`${stats.totalValueDeposited} USDC`} />
+          <StatCard label="Total Disbursed" value={`${stats.totalValueDisbursed} USDC`} />
         </div>
       )}
 
@@ -57,7 +57,7 @@ export function PoolsPage() {
             <Link
               key={pool.id}
               to={`/pools/${pool.id}`}
-              className="block bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition-colors"
+              className="block bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-5 hover:border-[var(--bg-3)] hover:bg-[var(--bg-1)] transition-colors"
             >
               <div className="flex items-start justify-between">
                 <div>

@@ -15,7 +15,7 @@ const questTypeLabels: Record<QuestType, string> = {
 const questTypeColors: Record<QuestType, string> = {
   [QuestType.ON_CHAIN]: 'bg-blue-500/10 text-blue-400',
   [QuestType.CONTENT]: 'bg-green-500/10 text-green-400',
-  [QuestType.DEVELOPMENT]: 'bg-purple-500/10 text-purple-400',
+  [QuestType.DEVELOPMENT]: 'bg-[var(--accent-500)]/10 text-[var(--accent-300)]',
   [QuestType.COMMUNITY]: 'bg-yellow-500/10 text-yellow-400',
 };
 
@@ -34,12 +34,12 @@ export function QuestsPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white">Quests</h1>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Quests</h1>
           <p className="text-gray-400 mt-1">Complete tasks, earn rewards, build reputation</p>
         </div>
         <Link
           to="/quests/new"
-          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          className="bg-[var(--accent-600)] hover:bg-[var(--accent-500)] text-white px-4 py-2 rounded-lg font-medium transition-colors"
         >
           Create Quest
         </Link>
@@ -47,9 +47,9 @@ export function QuestsPage() {
 
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <StatCard label="Total Quests" value={stats.totalQuestsCreated} icon={<Scroll className="w-4 h-4" />} />
-          <StatCard label="Completions" value={stats.totalQuestsCompleted} icon={<CheckCircle className="w-4 h-4" />} />
-          <StatCard label="Rewards Paid" value={`${stats.totalRewardsPaid} USDC`} icon={<DollarSign className="w-4 h-4" />} />
+          <StatCard label="Total Quests" value={stats.totalQuestsCreated} />
+          <StatCard label="Completions" value={stats.totalQuestsCompleted} />
+          <StatCard label="Rewards Paid" value={`${stats.totalRewardsPaid} USDC`} />
         </div>
       )}
 
@@ -64,7 +64,7 @@ export function QuestsPage() {
             <Link
               key={quest.id}
               to={`/quests/${quest.id}`}
-              className="block bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition-colors"
+              className="block bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-5 hover:border-[var(--bg-3)] hover:bg-[var(--bg-1)] transition-colors"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">

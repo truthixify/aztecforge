@@ -46,7 +46,7 @@ export function BountyDetailPage() {
         Back to Bounties
       </Link>
 
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
+      <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-8">
         <div className="flex items-start justify-between mb-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -79,7 +79,7 @@ export function BountyDetailPage() {
           <p className="text-gray-300 whitespace-pre-wrap">{bounty.description}</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 p-4 bg-gray-800/50 rounded-lg">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 p-4 bg-gray-950/50 rounded-lg">
           <div className="flex items-center gap-2 text-sm text-gray-400">
             <User className="w-4 h-4" />
             <div>

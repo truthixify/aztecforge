@@ -56,7 +56,7 @@ export function ReputationDetailPage() {
       </Link>
 
       {/* Header */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 mb-6">
+      <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-8 mb-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <p className="font-mono text-lg text-white mb-2">{address}</p>
@@ -74,7 +74,7 @@ export function ReputationDetailPage() {
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {stats.map((stat) => (
-            <div key={stat.label} className="bg-gray-800/50 rounded-lg p-4">
+            <div key={stat.label} className="bg-gray-950/50 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
                 {stat.icon}
                 <span className="text-xs text-gray-500">{stat.label}</span>
@@ -87,7 +87,7 @@ export function ReputationDetailPage() {
       </div>
 
       {/* Score Breakdown */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+      <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-6 mb-6">
         <h2 className="text-lg font-semibold text-white mb-4">Score Breakdown</h2>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between text-gray-400">
@@ -114,14 +114,14 @@ export function ReputationDetailPage() {
       </div>
 
       {/* Gate Check */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+      <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-6">
         <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <CheckCircle className="w-5 h-5" /> Gate Check
         </h2>
         <p className="text-sm text-gray-400 mb-3">Check if this contributor passes a reputation gate.</p>
         <div className="flex gap-3">
           <input value={gateId} onChange={(e) => setGateId(e.target.value)} placeholder="Gate ID"
-            className="w-28 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500" />
+            className="w-28 bg-gray-800 border border-[var(--line)] rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[var(--accent-500)]" />
           <button onClick={checkGate} disabled={!gateId}
             className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium">Check</button>
         </div>

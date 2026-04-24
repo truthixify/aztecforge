@@ -26,13 +26,13 @@ export function CreatePoolPage() {
         <div>
           <label className="block text-sm font-medium text-gray-400 mb-1">Purpose</label>
           <input type="text" value={form.purpose} onChange={(e) => update('purpose', e.target.value)}
-            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500"
+            className="w-full bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[var(--accent-500)]"
             placeholder="e.g., Fund Aztec developer education" />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-400 mb-1">Pool Type</label>
           <select value={form.poolType} onChange={(e) => update('poolType', Number(e.target.value))}
-            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500">
+            className="w-full bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[var(--accent-500)]">
             <option value={0}>Open (curator allocates freely)</option>
             <option value={1}>Quadratic (donation-weighted matching)</option>
             <option value={2}>Retroactive (reward past contributions)</option>
@@ -42,7 +42,7 @@ export function CreatePoolPage() {
         <div className="flex gap-3 pt-4">
           <button onClick={() => mutation.mutate()}
             disabled={mutation.isPending || !form.purpose}
-            className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-lg font-medium transition-colors">
+            className="bg-[var(--accent-600)] hover:bg-[var(--accent-500)] disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-lg font-medium transition-colors">
             {mutation.isPending ? 'Creating...' : 'Create Pool'}
           </button>
           <button onClick={() => navigate('/pools')}

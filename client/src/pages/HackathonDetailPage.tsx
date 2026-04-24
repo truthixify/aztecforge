@@ -57,7 +57,7 @@ export function HackathonDetailPage() {
         <ArrowLeft className="w-4 h-4" /> Back to Hackathons
       </Link>
 
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 mb-6">
+      <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-8 mb-6">
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -90,7 +90,7 @@ export function HackathonDetailPage() {
             <button onClick={() => startJudging.mutate()} className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Start Judging Phase</button>
           )}
           {hack.status === HackathonStatus.JUDGING && (
-            <button onClick={() => finalize.mutate()} className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Finalize Results</button>
+            <button onClick={() => finalize.mutate()} className="bg-[var(--accent-600)] hover:bg-[var(--accent-500)] text-white px-4 py-2 rounded-lg text-sm font-medium">Finalize Results</button>
           )}
         </div>
       </div>
@@ -105,7 +105,7 @@ export function HackathonDetailPage() {
                 <p className="text-gray-500 text-center py-8">No teams registered yet</p>
               ) : (
                 teams.map((t: { teamId: number; name: string; lead: string; memberCount: number }) => (
-                  <div key={t.teamId} className="bg-gray-900 border border-gray-800 rounded-lg p-4 flex justify-between items-center">
+                  <div key={t.teamId} className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-lg p-4 flex justify-between items-center">
                     <div>
                       <p className="text-white font-medium">{t.name}</p>
                       <p className="text-xs text-gray-500 font-mono">{String(t.lead).slice(0, 12)}...</p>
@@ -118,9 +118,9 @@ export function HackathonDetailPage() {
             {hack.status === HackathonStatus.REGISTRATION && (
               <div className="flex gap-3">
                 <input value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="Team name"
-                  className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500" />
+                  className="flex-1 bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[var(--accent-500)]" />
                 <button onClick={() => registerTeam.mutate()} disabled={!teamName}
-                  className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                  className="bg-[var(--accent-600)] hover:bg-[var(--accent-500)] disabled:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
                   Register Team
                 </button>
               </div>
@@ -135,7 +135,7 @@ export function HackathonDetailPage() {
                 <p className="text-gray-500 text-center py-8">No submissions yet</p>
               ) : (
                 submissions.map((s: { submissionId: number; projectName: string; trackIndex: number; averageScore: number; repoUrl: string }) => (
-                  <div key={s.submissionId} className="bg-gray-900 border border-gray-800 rounded-lg p-4">
+                  <div key={s.submissionId} className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="text-white font-medium">{s.projectName}</p>
@@ -155,11 +155,11 @@ export function HackathonDetailPage() {
             </div>
 
             {scoreForm.subId !== null && (
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 mb-4">
+              <div className="bg-gray-950/50 border border-[var(--line)] rounded-lg p-4 mb-4">
                 <p className="text-sm text-white mb-2">Score Submission #{scoreForm.subId}</p>
                 <div className="flex gap-3">
                   <input type="number" min={0} max={100} value={scoreForm.score} onChange={(e) => setScoreForm((p) => ({ ...p, score: Number(e.target.value) }))}
-                    className="w-20 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm" />
+                    className="w-20 bg-gray-900 border border-[var(--line)] rounded-lg px-3 py-2 text-white text-sm" />
                   <button onClick={() => scoreSub.mutate()} className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Submit Score</button>
                   <button onClick={() => setScoreForm({ subId: null, score: 80 })} className="text-gray-400 text-sm">Cancel</button>
                 </div>
@@ -167,17 +167,17 @@ export function HackathonDetailPage() {
             )}
 
             {(hack.status === HackathonStatus.REGISTRATION || hack.status === HackathonStatus.BUILDING) && (
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+              <div className="bg-gray-950/50 border border-[var(--line)] rounded-lg p-4">
                 <p className="text-sm text-white mb-3">Submit Project</p>
                 <div className="space-y-3">
                   <input value={submitForm.projectName} onChange={(e) => setSubmitForm((p) => ({ ...p, projectName: e.target.value }))} placeholder="Project name"
-                    className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500" />
+                    className="w-full bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[var(--accent-500)]" />
                   <textarea value={submitForm.description} onChange={(e) => setSubmitForm((p) => ({ ...p, description: e.target.value }))} placeholder="Description" rows={3}
-                    className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500" />
+                    className="w-full bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[var(--accent-500)]" />
                   <input value={submitForm.repoUrl} onChange={(e) => setSubmitForm((p) => ({ ...p, repoUrl: e.target.value }))} placeholder="Repository URL"
-                    className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500" />
+                    className="w-full bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[var(--accent-500)]" />
                   <button onClick={() => submitProject.mutate()} disabled={!submitForm.projectName || !submitForm.repoUrl}
-                    className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Submit</button>
+                    className="bg-[var(--accent-600)] hover:bg-[var(--accent-500)] disabled:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Submit</button>
                 </div>
               </div>
             )}
@@ -188,23 +188,23 @@ export function HackathonDetailPage() {
           <div>
             <p className="text-gray-500 text-center py-4 text-sm">Prizes are awarded after the hackathon is finalized.</p>
             {hack.status === HackathonStatus.COMPLETED && (
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+              <div className="bg-gray-950/50 border border-[var(--line)] rounded-lg p-4">
                 <p className="text-sm text-white mb-3">Award Prize</p>
                 <div className="flex gap-3 items-end">
                   <div>
                     <label className="text-xs text-gray-500">Team ID</label>
                     <input type="number" value={prizeForm.teamId} onChange={(e) => setPrizeForm((p) => ({ ...p, teamId: Number(e.target.value) }))}
-                      className="w-20 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm" />
+                      className="w-20 bg-gray-900 border border-[var(--line)] rounded-lg px-3 py-2 text-white text-sm" />
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">Placement</label>
                     <input type="number" min={1} value={prizeForm.placement} onChange={(e) => setPrizeForm((p) => ({ ...p, placement: Number(e.target.value) }))}
-                      className="w-16 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm" />
+                      className="w-16 bg-gray-900 border border-[var(--line)] rounded-lg px-3 py-2 text-white text-sm" />
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">Amount</label>
                     <input value={prizeForm.prizeAmount} onChange={(e) => setPrizeForm((p) => ({ ...p, prizeAmount: e.target.value }))} placeholder="USDC"
-                      className="w-28 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm" />
+                      className="w-28 bg-gray-900 border border-[var(--line)] rounded-lg px-3 py-2 text-white text-sm" />
                   </div>
                   <button onClick={() => awardPrize.mutate()} disabled={!prizeForm.prizeAmount}
                     className="bg-green-600 hover:bg-green-700 disabled:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Award</button>

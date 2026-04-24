@@ -15,12 +15,12 @@ export function HackathonsPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white">Hackathons</h1>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Hackathons</h1>
           <p className="text-gray-400 mt-1">Build, compete, and win prizes</p>
         </div>
         <Link
           to="/hackathons/new"
-          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          className="bg-[var(--accent-600)] hover:bg-[var(--accent-500)] text-white px-4 py-2 rounded-lg font-medium transition-colors"
         >
           Create Hackathon
         </Link>
@@ -37,7 +37,7 @@ export function HackathonsPage() {
             <Link
               key={hack.id}
               to={`/hackathons/${hack.id}`}
-              className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-gray-700 transition-colors"
+              className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-6 hover:border-[var(--bg-3)] hover:bg-[var(--bg-1)] transition-colors"
             >
               <div className="flex items-start justify-between mb-3">
                 <h3 className="text-lg font-semibold text-white">{hack.name}</h3>
@@ -46,7 +46,7 @@ export function HackathonsPage() {
               <p className="text-gray-400 text-sm line-clamp-2 mb-4">{hack.description}</p>
               <div className="flex flex-wrap gap-2 mb-4">
                 {hack.tracks?.map((track) => (
-                  <span key={track} className="bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded text-xs">
+                  <span key={track} className="bg-[var(--accent-500)]/10 text-[var(--accent-300)] px-2 py-0.5 rounded text-xs">
                     {track}
                   </span>
                 ))}

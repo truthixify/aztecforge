@@ -61,7 +61,7 @@ export function PoolDetailPage() {
         <ArrowLeft className="w-4 h-4" /> Back to Pools
       </Link>
 
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 mb-6">
+      <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-8 mb-6">
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
@@ -109,13 +109,13 @@ export function PoolDetailPage() {
 
       {/* Deposit */}
       {pool.status === 0 && (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-4">
+        <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-6 mb-4">
           <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
             <ArrowDown className="w-4 h-4 text-green-400" /> Deposit
           </h3>
           <div className="flex gap-3">
             <input value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} placeholder="Amount (USDC)"
-              className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500" />
+              className="flex-1 bg-gray-800 border border-[var(--line)] rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[var(--accent-500)]" />
             <button onClick={() => depositMut.mutate()} disabled={!depositAmount || depositMut.isPending}
               className="bg-green-600 hover:bg-green-700 disabled:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
               {depositMut.isPending ? 'Depositing...' : 'Deposit'}
@@ -126,21 +126,21 @@ export function PoolDetailPage() {
 
       {/* Allocate (curator) */}
       {pool.status === 0 && (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+        <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-6">
           <h3 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
             <ArrowUp className="w-4 h-4 text-purple-400" /> Allocate (Curator)
           </h3>
           <div className="space-y-3">
             <input value={allocForm.recipient} onChange={(e) => setAllocForm((p) => ({ ...p, recipient: e.target.value }))} placeholder="Recipient address"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500" />
+              className="w-full bg-gray-800 border border-[var(--line)] rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[var(--accent-500)]" />
             <div className="flex gap-3">
               <input value={allocForm.amount} onChange={(e) => setAllocForm((p) => ({ ...p, amount: e.target.value }))} placeholder="Amount (USDC)"
-                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500" />
+                className="flex-1 bg-gray-800 border border-[var(--line)] rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[var(--accent-500)]" />
               <input value={allocForm.reason} onChange={(e) => setAllocForm((p) => ({ ...p, reason: e.target.value }))} placeholder="Reason"
-                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500" />
+                className="flex-1 bg-gray-800 border border-[var(--line)] rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[var(--accent-500)]" />
             </div>
             <button onClick={() => allocateMut.mutate()} disabled={!allocForm.recipient || !allocForm.amount || allocateMut.isPending}
-              className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+              className="bg-[var(--accent-600)] hover:bg-[var(--accent-500)] disabled:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
               {allocateMut.isPending ? 'Allocating...' : 'Allocate'}
             </button>
           </div>

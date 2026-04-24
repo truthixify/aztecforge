@@ -65,7 +65,7 @@ export function CircleDetailPage() {
         <ArrowLeft className="w-4 h-4" /> Back to Circles
       </Link>
 
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 mb-6">
+      <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-8 mb-6">
         <h1 className="text-2xl font-bold text-white mb-4">{circle.name}</h1>
 
         <MetadataGrid items={[
@@ -79,14 +79,14 @@ export function CircleDetailPage() {
 
         <div className="mt-6">
           <button onClick={() => advanceEpochMut.mutate()} disabled={advanceEpochMut.isPending}
-            className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+            className="bg-[var(--accent-600)] hover:bg-[var(--accent-500)] disabled:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
             {advanceEpochMut.isPending ? 'Advancing...' : 'Advance Epoch'}
           </button>
         </div>
       </div>
 
       {/* Members */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+      <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-6 mb-6">
         <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <Users className="w-5 h-5" /> Members ({members.length})
         </h2>
@@ -102,7 +102,7 @@ export function CircleDetailPage() {
         </div>
         <div className="flex gap-3">
           <input value={newMember} onChange={(e) => setNewMember(e.target.value)} placeholder="Member address"
-            className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500" />
+            className="flex-1 bg-gray-800 border border-[var(--line)] rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-[var(--accent-500)]" />
           <button onClick={() => addMemberMut.mutate()} disabled={!newMember}
             className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1">
             <Plus className="w-4 h-4" /> Add
@@ -111,7 +111,7 @@ export function CircleDetailPage() {
       </div>
 
       {/* GIVE Allocation */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+      <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-6 mb-6">
         <h2 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
           <Gift className="w-5 h-5 text-purple-400" /> Allocate GIVE (Epoch #{circle.currentEpoch})
         </h2>
@@ -129,7 +129,7 @@ export function CircleDetailPage() {
                 type="number" min={0} max={giveRemaining + (giveAllocations[m] ?? 0)}
                 value={giveAllocations[m] ?? 0}
                 onChange={(e) => setGiveAllocations((prev) => ({ ...prev, [m]: Number(e.target.value) }))}
-                className="w-20 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-white text-sm text-center"
+                className="w-20 bg-gray-800 border border-[var(--line)] rounded-lg px-3 py-1.5 text-white text-sm text-center"
               />
               <span className="text-xs text-gray-500">GIVE</span>
             </div>
@@ -137,13 +137,13 @@ export function CircleDetailPage() {
         </div>
 
         <button onClick={() => giveMut.mutate()} disabled={totalGiveAllocated === 0 || giveRemaining < 0 || giveMut.isPending}
-          className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          className="bg-[var(--accent-600)] hover:bg-[var(--accent-500)] disabled:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
           {giveMut.isPending ? 'Submitting...' : 'Submit Allocations'}
         </button>
       </div>
 
       {/* Claim Rewards */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+      <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl p-6">
         <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <DollarSign className="w-5 h-5 text-green-400" /> Claim Epoch Reward
         </h2>
@@ -151,7 +151,7 @@ export function CircleDetailPage() {
           <div>
             <label className="text-xs text-gray-500">Epoch #</label>
             <input type="number" min={0} value={claimEpoch} onChange={(e) => setClaimEpoch(Number(e.target.value))}
-              className="w-20 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm" />
+              className="w-20 bg-gray-800 border border-[var(--line)] rounded-lg px-3 py-2 text-white text-sm" />
           </div>
           <button onClick={() => claimMut.mutate()} disabled={claimMut.isPending}
             className="bg-green-600 hover:bg-green-700 disabled:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium self-end">

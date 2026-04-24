@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Star, Trophy, Hammer, Scroll, Users } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { reputation } from '../lib/api';
 import { TierBadge } from '../components/StatusBadge';
 import { StatCard } from '../components/StatCard';
@@ -19,66 +19,60 @@ export function ReputationPage() {
   });
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">Reputation</h1>
-        <p className="text-gray-400 mt-1">Contributor leaderboard and reputation scores</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-white tracking-tight">Reputation</h1>
+        <p className="text-gray-400 mt-1">Contributor leaderboard and on-chain standing.</p>
       </div>
 
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <StatCard label="Total Contributors" value={stats.totalContributors} icon={<Users className="w-4 h-4" />} />
-          <StatCard label="Leaderboard Size" value={leaderboard.length} icon={<Star className="w-4 h-4" />} />
-          <StatCard
-            label="Top Score"
-            value={leaderboard[0]?.score ?? 0}
-            icon={<Trophy className="w-4 h-4" />}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <StatCard label="Contributors" value={stats.totalContributors} />
+          <StatCard label="Leaderboard" value={leaderboard.length} />
+          <StatCard label="Top score" value={leaderboard[0]?.score ?? 0} />
         </div>
       )}
 
-      <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+      <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-xl overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-800">
-              <th className="text-left text-xs font-medium text-gray-500 uppercase px-5 py-3">Rank</th>
-              <th className="text-left text-xs font-medium text-gray-500 uppercase px-5 py-3">Contributor</th>
-              <th className="text-left text-xs font-medium text-gray-500 uppercase px-5 py-3">Tier</th>
-              <th className="text-right text-xs font-medium text-gray-500 uppercase px-5 py-3">Score</th>
-              <th className="text-right text-xs font-medium text-gray-500 uppercase px-5 py-3">
-                <Hammer className="w-3.5 h-3.5 inline" /> Bounties
-              </th>
-              <th className="text-right text-xs font-medium text-gray-500 uppercase px-5 py-3">
-                <Trophy className="w-3.5 h-3.5 inline" /> Hacks Won
-              </th>
-              <th className="text-right text-xs font-medium text-gray-500 uppercase px-5 py-3">
-                <Scroll className="w-3.5 h-3.5 inline" /> Quests
-              </th>
+            <tr className="border-b border-[var(--line)]">
+              <th className="text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider px-5 py-3">#</th>
+              <th className="text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider px-5 py-3">Contributor</th>
+              <th className="text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider px-5 py-3">Tier</th>
+              <th className="text-right text-[10px] font-medium text-gray-500 uppercase tracking-wider px-5 py-3">Score</th>
+              <th className="text-right text-[10px] font-medium text-gray-500 uppercase tracking-wider px-5 py-3">Bounties</th>
+              <th className="text-right text-[10px] font-medium text-gray-500 uppercase tracking-wider px-5 py-3">Hack wins</th>
+              <th className="text-right text-[10px] font-medium text-gray-500 uppercase tracking-wider px-5 py-3">Quests</th>
             </tr>
           </thead>
           <tbody>
             {leaderboard.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-gray-500">
-                  No contributors yet
+                <td colSpan={7} className="text-center py-16">
+                  <Star className="w-10 h-10 mx-auto text-gray-600 mb-3" />
+                  <div className="text-gray-300 font-medium">No contributors yet</div>
+                  <div className="text-sm text-gray-500 mt-1">Complete bounties or quests to appear here</div>
                 </td>
               </tr>
             ) : (
-              leaderboard.map((contributor, index) => (
-                <tr key={contributor.address} className="border-b border-gray-800/50 hover:bg-gray-800/30 cursor-pointer" onClick={() => navigate(`/reputation/${contributor.address}`)}>
-                  <td className="px-5 py-3 text-gray-400">{index + 1}</td>
+              leaderboard.map((c, i) => (
+                <tr
+                  key={c.address}
+                  className="border-b border-[var(--line)]/50 hover:bg-[var(--bg-2)]/50 cursor-pointer transition-colors"
+                  onClick={() => navigate(`/reputation/${c.address}`)}
+                >
+                  <td className="px-5 py-3 text-gray-500 text-sm tabular-nums">{i + 1}</td>
                   <td className="px-5 py-3">
-                    <span className="text-white font-mono text-sm">
-                      {contributor.address.slice(0, 8)}...{contributor.address.slice(-4)}
+                    <span className="font-mono text-xs text-gray-300">
+                      {c.address.slice(0, 6)}...{c.address.slice(-4)}
                     </span>
                   </td>
-                  <td className="px-5 py-3">
-                    <TierBadge tier={contributor.tier} />
-                  </td>
-                  <td className="px-5 py-3 text-right text-white font-semibold">{contributor.score}</td>
-                  <td className="px-5 py-3 text-right text-gray-300">{contributor.bountiesCompleted}</td>
-                  <td className="px-5 py-3 text-right text-gray-300">{contributor.hackathonsWon}</td>
-                  <td className="px-5 py-3 text-right text-gray-300">{contributor.questsCompleted}</td>
+                  <td className="px-5 py-3"><TierBadge tier={c.tier} /></td>
+                  <td className="px-5 py-3 text-right text-white font-semibold tabular-nums">{c.score}</td>
+                  <td className="px-5 py-3 text-right text-gray-400 tabular-nums">{c.bountiesCompleted}</td>
+                  <td className="px-5 py-3 text-right text-gray-400 tabular-nums">{c.hackathonsWon}</td>
+                  <td className="px-5 py-3 text-right text-gray-400 tabular-nums">{c.questsCompleted}</td>
                 </tr>
               ))
             )}

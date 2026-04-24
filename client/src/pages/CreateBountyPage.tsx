@@ -39,7 +39,7 @@ export function CreateBountyPage() {
             type="text"
             value={form.title}
             onChange={(e) => update('title', e.target.value)}
-            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500"
+            className="w-full bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[var(--accent-500)]"
             placeholder="e.g., Build a Noir Merkle proof library"
           />
         </div>
@@ -50,7 +50,7 @@ export function CreateBountyPage() {
             value={form.description}
             onChange={(e) => update('description', e.target.value)}
             rows={5}
-            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500"
+            className="w-full bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[var(--accent-500)]"
             placeholder="Detailed requirements for the bounty..."
           />
         </div>
@@ -62,7 +62,7 @@ export function CreateBountyPage() {
               type="text"
               value={form.rewardAmount}
               onChange={(e) => update('rewardAmount', e.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500"
+              className="w-full bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[var(--accent-500)]"
               placeholder="5000"
             />
           </div>
@@ -73,7 +73,7 @@ export function CreateBountyPage() {
               type="number"
               value={form.deadlineBlock}
               onChange={(e) => update('deadlineBlock', Number(e.target.value))}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500"
+              className="w-full bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[var(--accent-500)]"
             />
           </div>
         </div>
@@ -85,7 +85,7 @@ export function CreateBountyPage() {
               type="text"
               value={form.skills}
               onChange={(e) => update('skills', e.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500"
+              className="w-full bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[var(--accent-500)]"
               placeholder="noir, typescript, react"
             />
           </div>
@@ -95,7 +95,7 @@ export function CreateBountyPage() {
             <select
               value={form.difficulty}
               onChange={(e) => update('difficulty', e.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500"
+              className="w-full bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[var(--accent-500)]"
             >
               <option value="easy">Easy</option>
               <option value="medium">Medium</option>
@@ -121,7 +121,7 @@ export function CreateBountyPage() {
           <button
             onClick={() => mutation.mutate()}
             disabled={mutation.isPending || !form.title || !form.description || !form.rewardAmount}
-            className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
+            className="bg-[var(--accent-600)] hover:bg-[var(--accent-500)] disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
           >
             {mutation.isPending ? 'Creating...' : 'Post Bounty'}
           </button>
