@@ -7,94 +7,201 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Bounty: open for submissions -> creator reviews -> winner paid from escrow
-// Status: 0=open (accepting submissions), 1=reviewing, 2=completed (winner paid), 3=cancelled
-model Bounty {
+// ─── ORGANIZATIONS ───────────────────────────────────────────
+
+// An organization/sponsor that creates listings
+model Organization {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  logo        String   @default("")
+  website     String   @default("")
+  description String   @default("")
+  industry    String   @default("")
+  twitter     String   @default("")
+  isVerified  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members  OrgMember[]
+  listings Listing[]
+}
+
+// Junction: user <-> org membership with role
+model OrgMember {
+  id        Int      @id @default(autoincrement())
+  orgId     Int
+  org       Organization @relation(fields: [orgId], references: [id])
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  role      String   @default("MEMBER") // ADMIN or MEMBER
+  createdAt DateTime @default(now())
+
+  @@unique([orgId, userId])
+}
+
+// ─── USERS ───────────────────────────────────────────────────
+
+model User {
+  id             Int      @id @default(autoincrement())
+  walletAddress  String   @unique
+  username       String   @default("")
+  displayName    String   @default("")
+  bio            String   @default("")
+  avatar         String   @default("")
+  twitter        String   @default("")
+  github         String   @default("")
+  discord        String   @default("")
+  telegram       String   @default("")
+  website        String   @default("")
+  skills         String   @default("[]") // JSON array
+  isVerified     Boolean  @default(false)
+  isBlocked      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  orgMemberships OrgMember[]
+  submissions    ListingSubmission[]
+  comments       Comment[]
+
+  // Reputation (cached)
+  reputationScore Int    @default(0)
+  reputationTier  Int    @default(0) // 0=newcomer,1=contributor,2=builder,3=expert,4=core
+  bountiesWon     Int    @default(0)
+  totalEarned     String @default("0")
+}
+
+// ─── LISTINGS (unified: bounty, project, grant, hackathon) ──
+
+// Listing lifecycle: DRAFT -> OPEN -> REVIEW -> CLOSED -> COMPLETED
+// Or: DRAFT -> OPEN -> CANCELLED
+model Listing {
+  id               Int      @id @default(autoincrement())
+  orgId            Int
+  org              Organization @relation(fields: [orgId], references: [id])
+  createdById      Int      // user who created it
+  pocId            Int?     // point of contact user (nullable)
+
+  // Basic info
+  title            String
+  slug             String   @unique
+  description      String   // rich text / markdown
+  type             String   @default("BOUNTY") // BOUNTY, PROJECT, GRANT, HACKATHON
+
+  // Status
+  status           String   @default("DRAFT") // DRAFT, OPEN, REVIEW, CLOSED, COMPLETED, CANCELLED
+  isPublished      Boolean  @default(false)
+  isFeatured       Boolean  @default(false)
+  isActive         Boolean  @default(true)
+
+  // Compensation
+  compensationType String   @default("FIXED") // FIXED, RANGE, VARIABLE
+  token            String   @default("USDC")
+  rewardAmount     String   @default("0") // total reward pool
+  rewards          String   @default("{}") // JSON: {"1": 5000, "2": 2000, "3": 1000}
+  maxWinners       Int      @default(1) // podium positions
+  maxBonusSpots    Int      @default(0) // additional winners beyond podium
+  isRewardPublic   Boolean  @default(true)
+
+  // Escrow
+  escrowBalance    String   @default("0")
+  onChainId        Int?     // contract bounty_id
+  txHash           String?
+
+  // Dates
+  deadline         DateTime
+  announcementDate DateTime? // when winners will be announced
+  isWinnersAnnounced Boolean @default(false)
+
+  // Categorization
+  skills           String   @default("[]") // JSON array
+  difficulty       String   @default("medium") // easy, medium, hard
+  region           String   @default("Global")
+  acceptedFormats  String   @default("[]") // JSON: ["github_repo","deployed_url",...]
+
+  // For projects/grants
+  eligibilityQuestions String @default("[]") // JSON: [{order, question, type}]
+
+  // For hackathons
+  tracks           String   @default("[]") // JSON array of track names
+  judgingDeadline   DateTime?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  submissions      ListingSubmission[]
+  comments         Comment[]
+}
+
+// ─── SUBMISSIONS ─────────────────────────────────────────────
+
+// One submission per user per listing
+model ListingSubmission {
   id              Int      @id @default(autoincrement())
-  onChainId       Int?     @unique
-  title           String
-  description     String
-  skills          String   @default("[]") // JSON array
-  difficulty      String   @default("medium")
-  acceptedFormats String   @default("[]") // JSON array: what creators accept (e.g. ["github_repo","figma_link","deployed_url","document","video"])
-  paymentToken    String
-  rewardAmount    String
-  deadline        Int
-  isAmountPublic  Boolean  @default(true)
-  creator         String
-  winner          String   @default("") // address of selected winner
-  escrowBalance   String   @default("0")
-  status          Int      @default(0)
-  txHash          String?
+  listingId       Int
+  listing         Listing  @relation(fields: [listingId], references: [id])
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id])
+
+  // Content
+  link            String   // primary submission URL
+  tweet           String   @default("") // optional tweet link
+  additionalInfo  String   @default("") // free text
+  eligibilityAnswers String @default("[]") // JSON
+  ask             String   @default("0") // for RANGE/VARIABLE — contributor's requested amount
+
+  // Official status (visible to submitter)
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED
+
+  // Internal review label (visible only to org)
+  label           String   @default("UNREVIEWED") // UNREVIEWED, REVIEWED, SHORTLISTED, SPAM, LOW_QUALITY, MID_QUALITY, HIGH_QUALITY
+
+  // Winner tracking
+  isWinner        Boolean  @default(false)
+  winnerPosition  Int?     // 1, 2, 3... or 99 for bonus
+  rewardAmount    String   @default("0")
+
+  // Payment
+  isPaid          Boolean  @default(false)
+  paymentTxHash   String?
+  paidAt          DateTime?
+
+  // Internal notes (private, only org sees)
+  internalNotes   String   @default("")
+
+  // Likes
+  likeCount       Int      @default(0)
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  submissions     BountySubmission[]
+
+  @@unique([listingId, userId])
 }
 
-// Anyone can submit work for an open bounty
-// Status: 0=pending, 1=accepted (winner), 2=rejected
-model BountySubmission {
-  id              Int      @id @default(autoincrement())
-  bountyId        Int
-  bounty          Bounty   @relation(fields: [bountyId], references: [id])
-  submitter       String
-  submissionUrl   String
-  notes           String   @default("")
-  status          Int      @default(0)
-  createdAt       DateTime @default(now())
+// ─── COMMENTS ────────────────────────────────────────────────
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  listingId Int
+  listing   Listing  @relation(fields: [listingId], references: [id])
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id])
+  message   String
+  type      String   @default("NORMAL") // NORMAL, DEADLINE_EXTENSION, WINNER_ANNOUNCEMENT, SUBMISSION
+  replyToId Int?
+  createdAt DateTime @default(now())
 }
 
-// Off-chain metadata for hackathons
-model Hackathon {
-  id                 Int      @id @default(autoincrement())
-  onChainId          Int?     @unique
-  name               String
-  description        String
-  paymentToken       String
-  prizePool          String
-  status             Int      @default(0) // 0=registration,1=building,2=judging,3=completed,4=cancelled
-  submissionDeadline Int
-  judgingDeadline     Int
-  tracks             String   @default("[]") // JSON array
-  organizer          String
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  teams              Team[]
-  submissions        Submission[]
-}
+// ─── FUNDING POOLS (unchanged) ───────────────────────────────
 
-model Team {
-  id          Int       @id @default(autoincrement())
-  hackathonId Int
-  hackathon   Hackathon @relation(fields: [hackathonId], references: [id])
-  name        String
-  lead        String
-  members     String    @default("[]") // JSON array
-  createdAt   DateTime  @default(now())
-}
-
-model Submission {
-  id           Int       @id @default(autoincrement())
-  hackathonId  Int
-  hackathon    Hackathon @relation(fields: [hackathonId], references: [id])
-  teamId       Int
-  trackIndex   Int
-  projectName  String
-  description  String
-  repoUrl      String
-  demoUrl      String    @default("")
-  averageScore Float     @default(0)
-  createdAt    DateTime  @default(now())
-}
-
-// Off-chain metadata for funding pools
 model FundingPool {
   id              Int      @id @default(autoincrement())
   onChainId       Int?     @unique
   purpose         String
   paymentToken    String
-  poolType        Int      @default(0) // 0=open,1=quadratic,2=retroactive,3=streaming
-  status          Int      @default(0) // 0=active,1=paused,2=closed
+  poolType        Int      @default(0)
+  status          Int      @default(0)
   curator         String
   totalDeposited  String   @default("0")
   totalDisbursed  String   @default("0")
@@ -104,7 +211,8 @@ model FundingPool {
   updatedAt       DateTime @updatedAt
 }
 
-// Off-chain metadata for peer allocation circles
+// ─── PEER ALLOCATION CIRCLES (unchanged) ─────────────────────
+
 model Circle {
   id                 Int      @id @default(autoincrement())
   onChainId          Int?     @unique
@@ -117,56 +225,7 @@ model Circle {
   rewardPool         String
   totalDistributed   String   @default("0")
   admin              String
-  members            String   @default("[]") // JSON array
+  members            String   @default("[]")
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
-}
-
-// Off-chain metadata for quests
-model Quest {
-  id                  Int      @id @default(autoincrement())
-  onChainId           Int?     @unique
-  name                String
-  description         String
-  questType           Int      @default(0) // 0=on-chain,1=content,2=dev,3=community
-  paymentToken        String
-  rewardPerCompletion String
-  maxCompletions      Int      @default(0)
-  completionCount     Int      @default(0)
-  deadline            Int
-  status              Int      @default(0) // 0=active,1=inactive
-  reputationGateId    Int      @default(0)
-  creator             String
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  completions         QuestCompletion[]
-}
-
-model QuestCompletion {
-  id              Int      @id @default(autoincrement())
-  questId         Int
-  quest           Quest    @relation(fields: [questId], references: [id])
-  completer       String
-  verificationUrl String
-  completedAt     DateTime @default(now())
-}
-
-// Contributor reputation (cached from on-chain + off-chain enrichment)
-model Contributor {
-  id                     Int      @id @default(autoincrement())
-  address                String   @unique
-  score                  Int      @default(0)
-  tier                   Int      @default(0)
-  bountiesCompleted      Int      @default(0)
-  bountiesTotalEarned    String   @default("0")
-  hackathonsParticipated Int      @default(0)
-  hackathonsWon          Int      @default(0)
-  grantsReceived         Int      @default(0)
-  grantsTotalEarned      String   @default("0")
-  milestonesDelivered    Int      @default(0)
-  questsCompleted        Int      @default(0)
-  peerGiveReceived       String   @default("0")
-  peerEpochsParticipated Int      @default(0)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
 }
