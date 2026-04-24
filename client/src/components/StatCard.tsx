@@ -1,19 +1,22 @@
-import type { ReactNode } from 'react';
-
 interface StatCardProps {
   label: string;
   value: string | number;
-  icon: ReactNode;
+  sub?: string;
+  accent?: string;
 }
 
-export function StatCard({ label, value, icon }: StatCardProps) {
+export function StatCard({ label, value, sub, accent }: StatCardProps) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-      <div className="flex items-center gap-3 mb-2 text-gray-400">
-        {icon}
-        <span className="text-sm">{label}</span>
+    <div className="bg-[var(--bg-1)]/60 border border-[var(--line)] rounded-lg px-4 py-3 hover:border-[var(--bg-3)] transition-colors min-w-0">
+      <div className="text-gray-500 text-[10px] uppercase tracking-[0.08em] font-medium mb-2 whitespace-nowrap">
+        {label}
       </div>
-      <p className="text-2xl font-bold text-white">{value}</p>
+      <div className="flex items-baseline gap-1.5 min-w-0 whitespace-nowrap">
+        <div className={`text-[22px] leading-none font-semibold tabular-nums tracking-tight ${accent || 'text-white'}`}>
+          {value}
+        </div>
+        {sub && <div className="text-[11px] text-gray-500">{sub}</div>}
+      </div>
     </div>
   );
 }
