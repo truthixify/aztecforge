@@ -10,15 +10,22 @@ export function CreateQuestPage() {
   const [form, setForm] = useState({
     name: '',
     description: '',
-    questType: 0,
-    paymentToken: '0x0000000000000000000000000000000000000001',
-    rewardPerCompletion: '',
+    rewardAmount: '',
     maxCompletions: 50,
-    deadlineBlock: 200000,
+    deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   });
 
   const mutation = useMutation({
-    mutationFn: () => listings.create(form),
+    mutationFn: () => listings.create({
+      orgId: 1,
+      title: form.name,
+      slug: form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+      description: form.description,
+      type: 'BOUNTY',
+      rewardAmount: form.rewardAmount,
+      maxWinners: form.maxCompletions,
+      deadline: new Date(form.deadline).toISOString(),
+    }),
     onSuccess: () => { toast.success('Quest created'); navigate('/quests'); },
   });
 
@@ -44,7 +51,7 @@ export function CreateQuestPage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1">Quest Type</label>
-            <select value={form.questType} onChange={(e) => update('questType', Number(e.target.value))}
+            <select value="BOUNTY" disabled
               className="w-full bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[var(--accent-500)]">
               <option value={0}>On-Chain</option>
               <option value={1}>Content</option>
@@ -54,7 +61,7 @@ export function CreateQuestPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1">Reward per Completion (USDC)</label>
-            <input type="text" value={form.rewardPerCompletion} onChange={(e) => update('rewardPerCompletion', e.target.value)}
+            <input type="text" value={form.rewardAmount} onChange={(e) => update('rewardAmount', e.target.value)}
               className="w-full bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[var(--accent-500)]"
               placeholder="100" />
           </div>
@@ -66,14 +73,14 @@ export function CreateQuestPage() {
               className="w-full bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[var(--accent-500)]" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Deadline (block #)</label>
-            <input type="number" value={form.deadlineBlock} onChange={(e) => update('deadlineBlock', Number(e.target.value))}
+            <label className="block text-sm font-medium text-gray-400 mb-1">Deadline</label>
+            <input type="date" value={form.deadline} onChange={(e) => update('deadline', e.target.value)}
               className="w-full bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[var(--accent-500)]" />
           </div>
         </div>
         <div className="flex gap-3 pt-4">
           <button onClick={() => mutation.mutate()}
-            disabled={mutation.isPending || !form.name || !form.description || !form.rewardPerCompletion}
+            disabled={mutation.isPending || !form.name || !form.description || !form.rewardAmount}
             className="bg-[var(--accent-600)] hover:bg-[var(--accent-500)] disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-lg font-medium transition-colors">
             {mutation.isPending ? 'Creating...' : 'Create Quest'}
           </button>

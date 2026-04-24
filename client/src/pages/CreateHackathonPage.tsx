@@ -10,17 +10,23 @@ export function CreateHackathonPage() {
   const [form, setForm] = useState({
     name: '',
     description: '',
-    paymentToken: '0x0000000000000000000000000000000000000001',
     totalPrizePool: '',
-    submissionDeadline: 200000,
-    judgingDeadline: 300000,
+    deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    judgingDeadline: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     tracks: '',
   });
 
   const mutation = useMutation({
     mutationFn: () =>
       listings.create({
-        ...form,
+        orgId: 1,
+        title: form.name,
+        slug: form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+        description: form.description,
+        type: 'HACKATHON',
+        rewardAmount: form.totalPrizePool,
+        deadline: new Date(form.deadline).toISOString(),
+        judgingDeadline: new Date(form.judgingDeadline).toISOString(),
         tracks: form.tracks.split(',').map((t) => t.trim()).filter(Boolean),
       }),
     onSuccess: () => { toast.success('Hackathon created'); navigate('/hackathons'); },
@@ -61,13 +67,13 @@ export function CreateHackathonPage() {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Submission Deadline (block #)</label>
-            <input type="number" value={form.submissionDeadline} onChange={(e) => update('submissionDeadline', Number(e.target.value))}
+            <label className="block text-sm font-medium text-gray-400 mb-1">Submission Deadline</label>
+            <input type="date" value={form.deadline} onChange={(e) => update('deadline', e.target.value)}
               className="w-full bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[var(--accent-500)]" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Judging Deadline (block #)</label>
-            <input type="number" value={form.judgingDeadline} onChange={(e) => update('judgingDeadline', Number(e.target.value))}
+            <label className="block text-sm font-medium text-gray-400 mb-1">Judging Deadline</label>
+            <input type="date" value={form.judgingDeadline} onChange={(e) => update('judgingDeadline', e.target.value)}
               className="w-full bg-gray-900 border border-[var(--line)] rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[var(--accent-500)]" />
           </div>
         </div>

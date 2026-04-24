@@ -87,7 +87,7 @@ export function QuestDetailPage() {
         <MetadataGrid items={[
           { icon: <User className="w-4 h-4" />, label: 'Creator', value: `${String(quest.creator).slice(0, 10)}...`, mono: true },
           { icon: <DollarSign className="w-4 h-4" />, label: 'Reward', value: `${quest.rewardPerCompletion} USDC` },
-          { icon: <Clock className="w-4 h-4" />, label: 'Deadline', value: `Block ${quest.deadline}` },
+          { icon: <Clock className="w-4 h-4" />, label: 'Deadline', value: quest.deadline ? new Date(quest.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No deadline' },
           { icon: <Zap className="w-4 h-4" />, label: 'Reputation Gate', value: quest.reputationGateId || 'None' },
         ]} />
       </div>
