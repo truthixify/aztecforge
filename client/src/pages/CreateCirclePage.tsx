@@ -1,3 +1,4 @@
+import { useToast } from "../components/Toast";
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
@@ -15,7 +16,7 @@ export function CreateCirclePage() {
 
   const mutation = useMutation({
     mutationFn: () => circles.create(form),
-    onSuccess: () => navigate('/circles'),
+    onSuccess: () => { useToast().success('Created'); navigate('/circles'),
   });
 
   const update = (field: string, value: string | number) =>

@@ -1,7 +1,8 @@
+import { useMemo } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query';
 import { AztecProvider } from './contexts/AztecContext';
-import { ToastProvider } from './components/Toast';
+import { ToastProvider, useToast } from './components/Toast';
 import { Layout } from './components/Layout';
 import { LandingPage } from './pages/LandingPage';
 import { BountiesPage } from './pages/BountiesPage';
@@ -22,19 +23,45 @@ import { QuestsPage } from './pages/QuestsPage';
 import { QuestDetailPage } from './pages/QuestDetailPage';
 import { CreateQuestPage } from './pages/CreateQuestPage';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 10_000,
-      retry: 1,
-    },
-  },
-});
-
 export default function App() {
   return (
     <AztecProvider>
-    <ToastProvider>
+      <ToastProvider>
+        <AppInner />
+      </ToastProvider>
+    </AztecProvider>
+  );
+}
+
+function AppInner() {
+  const toast = useToast();
+
+  const queryClient = useMemo(
+    () =>
+      new QueryClient({
+        queryCache: new QueryCache({
+          onError: (error) => {
+            const message = error instanceof Error ? error.message : 'Failed to load data';
+            toast.error(message);
+          },
+        }),
+        mutationCache: new MutationCache({
+          onError: (error) => {
+            const message = error instanceof Error ? error.message : 'Action failed';
+            toast.error(message);
+          },
+        }),
+        defaultOptions: {
+          queries: {
+            staleTime: 10_000,
+            retry: 1,
+          },
+        },
+      }),
+    [toast],
+  );
+
+  return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
@@ -66,7 +93,5 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>
-    </ToastProvider>
-    </AztecProvider>
   );
 }

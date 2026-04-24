@@ -1,3 +1,4 @@
+import { useToast } from "../components/Toast";
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
@@ -17,7 +18,7 @@ export function CreateQuestPage() {
 
   const mutation = useMutation({
     mutationFn: () => quests.create(form),
-    onSuccess: () => navigate('/quests'),
+    onSuccess: () => { useToast().success('Created'); navigate('/quests'),
   });
 
   const update = (field: string, value: string | number) =>

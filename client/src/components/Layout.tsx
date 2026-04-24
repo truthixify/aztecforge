@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Hammer, Trophy, Users, Coins, Star, Scroll, Menu, X, Home } from 'lucide-react';
 import clsx from 'clsx';
 import { LogoMark } from './LogoMark';
 import { WalletButton } from './WalletButton';
+import { stats } from '../lib/api';
+import { useAztec } from '../contexts/AztecContext';
 
 const NAV_ITEMS = [
   { to: '/bounties', key: 'bounties', label: 'Bounties', icon: Hammer, hint: 'Task-based rewards' },
@@ -34,6 +37,12 @@ export function Layout() {
   };
 
   const isHome = location.pathname === '/';
+  const { isConnected } = useAztec();
+  const { data: dashStats } = useQuery({
+    queryKey: ['stats', 'dashboard'],
+    queryFn: () => stats.dashboard(),
+    staleTime: 30_000,
+  });
 
   return (
     <div className="min-h-screen text-gray-100">
@@ -152,10 +161,12 @@ export function Layout() {
               <span>AztecForge &middot; Private community incentives on Aztec Network</span>
             </div>
             <div className="flex items-center gap-4">
-              <span>Block 100,000</span>
+              {dashStats && (
+                <span>{dashStats.totalBounties} bounties &middot; {dashStats.totalContributors} contributors</span>
+              )}
               <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400" style={{ animation: 'pulseGlow 2s ease-in-out infinite' }} />
-                Testnet
+                <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-green-400' : 'bg-gray-500'}`} style={isConnected ? { animation: 'pulseGlow 2s ease-in-out infinite' } : undefined} />
+                {isConnected ? 'Connected' : 'Offline'}
               </span>
             </div>
           </div>

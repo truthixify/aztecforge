@@ -1,3 +1,4 @@
+import { useToast } from "../components/Toast";
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
@@ -13,7 +14,7 @@ export function CreatePoolPage() {
 
   const mutation = useMutation({
     mutationFn: () => pools.create(form),
-    onSuccess: () => navigate('/pools'),
+    onSuccess: () => { useToast().success('Created'); navigate('/pools'),
   });
 
   const update = (field: string, value: string | number) =>

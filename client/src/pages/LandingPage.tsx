@@ -57,7 +57,7 @@ export function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--accent-500)]/30 bg-[var(--accent-500)]/10 text-[var(--accent-300)] text-xs font-medium mb-8">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-400)]" style={{ animation: 'pulseGlow 2s ease-in-out infinite' }} />
-            Live on Aztec testnet
+            {dashStats?.totalBounties ? `${dashStats.totalBounties} bounties live` : 'Built on Aztec Network'}
           </div>
 
           <h1 className="text-[2.5rem] leading-[1.05] sm:text-5xl md:text-7xl font-semibold text-white tracking-tight break-words">

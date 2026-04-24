@@ -1,3 +1,4 @@
+import { useToast } from "../components/Toast";
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
@@ -21,7 +22,7 @@ export function CreateHackathonPage() {
         ...form,
         tracks: form.tracks.split(',').map((t) => t.trim()).filter(Boolean),
       }),
-    onSuccess: () => navigate('/hackathons'),
+    onSuccess: () => { useToast().success('Created'); navigate('/hackathons'),
   });
 
   const update = (field: string, value: string | number) =>

@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { bounties } from '../lib/api';
+import { useToast } from '../components/Toast';
 
 export function CreateBountyPage() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -22,7 +24,7 @@ export function CreateBountyPage() {
         ...form,
         skills: form.skills ? form.skills.split(',').map((s) => s.trim()) : [],
       }),
-    onSuccess: (data) => navigate(`/bounties/${data.id}`),
+    onSuccess: (data) => { toast.success('Bounty created', data.title); navigate(`/bounties/${data.id}`); },
   });
 
   const update = (field: string, value: string | number | boolean) =>
@@ -133,9 +135,6 @@ export function CreateBountyPage() {
           </button>
         </div>
 
-        {mutation.isError && (
-          <p className="text-red-400 text-sm">Failed to create bounty. Please try again.</p>
-        )}
       </div>
     </div>
   );
