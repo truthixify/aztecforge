@@ -5,6 +5,31 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// Transform axios errors into readable messages
+api.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    if (error.response) {
+      const status = error.response.status;
+      const serverMsg = error.response.data?.message;
+      if (status === 502 || status === 503) {
+        return Promise.reject(new Error('Server is not running. Start it with: cd server && pnpm start:dev'));
+      }
+      if (status === 404) {
+        return Promise.reject(new Error(serverMsg || 'Not found'));
+      }
+      if (status === 400) {
+        return Promise.reject(new Error(serverMsg || 'Invalid request'));
+      }
+      return Promise.reject(new Error(serverMsg || `Server error (${status})`));
+    }
+    if (error.code === 'ERR_NETWORK') {
+      return Promise.reject(new Error('Cannot connect to server. Is it running?'));
+    }
+    return Promise.reject(error);
+  },
+);
+
 // Attach sender address to every request
 export function setSender(address: string) {
   api.defaults.headers.common['x-sender'] = address;
