@@ -25,6 +25,7 @@ export const bounties = {
     isAmountPublic?: boolean;
     skills?: string[];
     difficulty?: string;
+    acceptedFormats?: string[];
   }) => api.post('/bounties', data).then((r) => r.data),
   submissions: (id: number) => api.get(`/bounties/${id}/submissions`).then((r) => r.data),
   submit: (id: number, data: { submissionUrl: string; notes?: string }) =>

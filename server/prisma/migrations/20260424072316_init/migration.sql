@@ -6,6 +6,7 @@ CREATE TABLE "Bounty" (
     "description" TEXT NOT NULL,
     "skills" TEXT NOT NULL DEFAULT '[]',
     "difficulty" TEXT NOT NULL DEFAULT 'medium',
+    "acceptedFormats" TEXT NOT NULL DEFAULT '[]',
     "paymentToken" TEXT NOT NULL,
     "rewardAmount" TEXT NOT NULL,
     "deadline" INTEGER NOT NULL,

@@ -47,8 +47,12 @@ export class CreateBountyDto {
   @IsOptional()
   difficulty?: string;
 
-  @ApiProperty({ description: 'Authwit nonce for token transfer authorization', required: false })
-  @IsString()
+  @ApiProperty({
+    description: 'Accepted submission formats (what the creator will review)',
+    required: false,
+    example: ['github_repo', 'deployed_url', 'figma_link', 'document', 'video', 'other'],
+  })
+  @IsString({ each: true })
   @IsOptional()
-  authwitNonce?: string;
+  acceptedFormats?: string[];
 }

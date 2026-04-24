@@ -103,6 +103,20 @@ export function BountyDetailPage() {
 
         <p className="text-gray-300 whitespace-pre-wrap leading-relaxed mb-6">{bounty.description}</p>
 
+        {/* Accepted submission formats */}
+        {bounty.acceptedFormats?.length > 0 && (
+          <div className="mb-6">
+            <div className="text-[11px] uppercase tracking-wider text-gray-500 mb-2">Accepted submissions</div>
+            <div className="flex flex-wrap gap-2">
+              {bounty.acceptedFormats.map((fmt: string) => (
+                <span key={fmt} className="px-2 py-1 rounded-md text-xs border bg-[var(--bg-2)] text-gray-300 border-[var(--line)] capitalize">
+                  {fmt.replace(/_/g, ' ')}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-950/50 border border-gray-800 rounded-xl">
           <div>
             <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-gray-500 mb-1"><User className="w-3 h-3" /> Creator</div>

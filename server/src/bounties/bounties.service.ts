@@ -17,6 +17,7 @@ export class BountiesService {
         isAmountPublic: dto.isAmountPublic !== false,
         skills: JSON.stringify(dto.skills ?? []),
         difficulty: dto.difficulty ?? 'medium',
+        acceptedFormats: JSON.stringify(dto.acceptedFormats ?? ['github_repo', 'deployed_url']),
         creator,
         escrowBalance: dto.rewardAmount,
         status: 0, // open for submissions
@@ -37,6 +38,7 @@ export class BountiesService {
     return bounties.map((b) => ({
       ...b,
       skills: JSON.parse(b.skills),
+      acceptedFormats: JSON.parse(b.acceptedFormats),
       submissionCount: b._count.submissions,
     }));
   }
@@ -50,7 +52,7 @@ export class BountiesService {
       },
     });
     if (!bounty) throw new NotFoundException(`Bounty #${id} not found`);
-    return { ...bounty, skills: JSON.parse(bounty.skills), submissionCount: bounty._count.submissions };
+    return { ...bounty, skills: JSON.parse(bounty.skills), acceptedFormats: JSON.parse(bounty.acceptedFormats), submissionCount: bounty._count.submissions };
   }
 
   // Anyone can submit work for an open bounty

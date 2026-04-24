@@ -16,6 +16,7 @@ model Bounty {
   description     String
   skills          String   @default("[]") // JSON array
   difficulty      String   @default("medium")
+  acceptedFormats String   @default("[]") // JSON array: what creators accept (e.g. ["github_repo","figma_link","deployed_url","document","video"])
   paymentToken    String
   rewardAmount    String
   deadline        Int
