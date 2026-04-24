@@ -6,6 +6,7 @@ import { quests } from '../lib/api';
 
 export function CreateQuestPage() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -18,7 +19,7 @@ export function CreateQuestPage() {
 
   const mutation = useMutation({
     mutationFn: () => quests.create(form),
-    onSuccess: () => { useToast().success('Created'); navigate('/quests'),
+    onSuccess: () => { toast.success('Quest created'); navigate('/quests'); },
   });
 
   const update = (field: string, value: string | number) =>

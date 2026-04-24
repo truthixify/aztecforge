@@ -6,6 +6,7 @@ import { hackathons } from '../lib/api';
 
 export function CreateHackathonPage() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -22,7 +23,7 @@ export function CreateHackathonPage() {
         ...form,
         tracks: form.tracks.split(',').map((t) => t.trim()).filter(Boolean),
       }),
-    onSuccess: () => { useToast().success('Created'); navigate('/hackathons'),
+    onSuccess: () => { toast.success('Hackathon created'); navigate('/hackathons'); },
   });
 
   const update = (field: string, value: string | number) =>

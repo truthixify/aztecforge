@@ -6,6 +6,7 @@ import { circles } from '../lib/api';
 
 export function CreateCirclePage() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [form, setForm] = useState({
     name: '',
     paymentToken: '0x0000000000000000000000000000000000000001',
@@ -16,7 +17,7 @@ export function CreateCirclePage() {
 
   const mutation = useMutation({
     mutationFn: () => circles.create(form),
-    onSuccess: () => { useToast().success('Created'); navigate('/circles'),
+    onSuccess: () => { toast.success('Circle created'); navigate('/circles'); },
   });
 
   const update = (field: string, value: string | number) =>

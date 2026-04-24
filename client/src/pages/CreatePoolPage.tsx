@@ -6,6 +6,7 @@ import { pools } from '../lib/api';
 
 export function CreatePoolPage() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [form, setForm] = useState({
     purpose: '',
     paymentToken: '0x0000000000000000000000000000000000000001',
@@ -14,7 +15,7 @@ export function CreatePoolPage() {
 
   const mutation = useMutation({
     mutationFn: () => pools.create(form),
-    onSuccess: () => { useToast().success('Created'); navigate('/pools'),
+    onSuccess: () => { toast.success('Pool created'); navigate('/pools'); },
   });
 
   const update = (field: string, value: string | number) =>
