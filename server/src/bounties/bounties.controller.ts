@@ -1,19 +1,9 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Param,
-  Body,
-  Query,
-  Headers,
-  ParseIntPipe,
+  Controller, Get, Post, Patch, Param, Body, Query, Headers, ParseIntPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiHeader } from '@nestjs/swagger';
 import { BountiesService } from './bounties.service';
 import { CreateBountyDto } from './dto/create-bounty.dto';
-import { SubmitWorkDto } from './dto/submit-work.dto';
-import { BountyStatus } from '../common/entities/bounty.entity';
 
 @ApiTags('bounties')
 @Controller('bounties')
@@ -21,23 +11,17 @@ export class BountiesController {
   constructor(private readonly bountiesService: BountiesService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new bounty' })
+  @ApiOperation({ summary: 'Create a new bounty with escrowed reward' })
   @ApiHeader({ name: 'x-sender', description: 'Creator address' })
-  create(
-    @Body() dto: CreateBountyDto,
-    @Headers('x-sender') sender: string,
-  ) {
+  create(@Body() dto: CreateBountyDto, @Headers('x-sender') sender: string) {
     return this.bountiesService.create(dto, sender);
   }
 
   @Get()
   @ApiOperation({ summary: 'List all bounties' })
-  @ApiQuery({ name: 'status', required: false, enum: BountyStatus })
+  @ApiQuery({ name: 'status', required: false })
   @ApiQuery({ name: 'creator', required: false })
-  findAll(
-    @Query('status') status?: string,
-    @Query('creator') creator?: string,
-  ) {
+  findAll(@Query('status') status?: string, @Query('creator') creator?: string) {
     return this.bountiesService.findAll({
       status: status !== undefined ? Number(status) : undefined,
       creator,
@@ -51,89 +35,67 @@ export class BountiesController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a single bounty by ID' })
+  @ApiOperation({ summary: 'Get bounty details with all submissions' })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.bountiesService.findOne(id);
   }
 
-  @Patch(':id/claim')
-  @ApiOperation({ summary: 'Claim a bounty to work on it' })
-  @ApiHeader({ name: 'x-sender', description: 'Claimer address' })
-  claim(
-    @Param('id', ParseIntPipe) id: number,
-    @Headers('x-sender') sender: string,
-  ) {
-    return this.bountiesService.claim(id, sender);
+  @Get(':id/submissions')
+  @ApiOperation({ summary: 'List all submissions for a bounty' })
+  getSubmissions(@Param('id', ParseIntPipe) id: number) {
+    return this.bountiesService.getSubmissions(id);
   }
 
-  @Patch(':id/submit')
-  @ApiOperation({ summary: 'Submit work for a claimed bounty' })
+  @Post(':id/submissions')
+  @ApiOperation({ summary: 'Submit work for a bounty (open to anyone)' })
   @ApiHeader({ name: 'x-sender', description: 'Submitter address' })
   submitWork(
     @Param('id', ParseIntPipe) id: number,
     @Headers('x-sender') sender: string,
-    @Body() dto: SubmitWorkDto,
+    @Body() body: { submissionUrl: string; notes?: string },
   ) {
-    return this.bountiesService.submitWork(id, sender, dto);
+    return this.bountiesService.submitWork(id, sender, body.submissionUrl, body.notes ?? '');
   }
 
-  @Patch(':id/approve')
-  @ApiOperation({ summary: 'Approve a submission and release payment' })
+  @Patch(':id/submissions/:subId/select')
+  @ApiOperation({ summary: 'Select a submission as the winner and pay them' })
   @ApiHeader({ name: 'x-sender', description: 'Creator address' })
-  approve(
+  selectWinner(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('subId', ParseIntPipe) subId: number,
+    @Headers('x-sender') sender: string,
+  ) {
+    return this.bountiesService.selectWinner(id, subId, sender);
+  }
+
+  @Patch(':id/submissions/:subId/reject')
+  @ApiOperation({ summary: 'Reject a specific submission' })
+  @ApiHeader({ name: 'x-sender', description: 'Creator address' })
+  rejectSubmission(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('subId', ParseIntPipe) subId: number,
+    @Headers('x-sender') sender: string,
+  ) {
+    return this.bountiesService.rejectSubmission(id, subId, sender);
+  }
+
+  @Patch(':id/close-submissions')
+  @ApiOperation({ summary: 'Close submissions and start reviewing' })
+  @ApiHeader({ name: 'x-sender', description: 'Creator address' })
+  closeSubmissions(
     @Param('id', ParseIntPipe) id: number,
     @Headers('x-sender') sender: string,
   ) {
-    return this.bountiesService.approve(id, sender);
-  }
-
-  @Patch(':id/reject')
-  @ApiOperation({ summary: 'Reject a submission and reopen' })
-  @ApiHeader({ name: 'x-sender', description: 'Creator address' })
-  reject(
-    @Param('id', ParseIntPipe) id: number,
-    @Headers('x-sender') sender: string,
-  ) {
-    return this.bountiesService.reject(id, sender);
+    return this.bountiesService.closeSubmissions(id, sender);
   }
 
   @Patch(':id/cancel')
-  @ApiOperation({ summary: 'Cancel a bounty and refund escrow' })
+  @ApiOperation({ summary: 'Cancel bounty and refund escrow' })
   @ApiHeader({ name: 'x-sender', description: 'Creator address' })
   cancel(
     @Param('id', ParseIntPipe) id: number,
     @Headers('x-sender') sender: string,
   ) {
     return this.bountiesService.cancel(id, sender);
-  }
-
-  @Patch(':id/unclaim')
-  @ApiOperation({ summary: 'Give up a claim' })
-  @ApiHeader({ name: 'x-sender', description: 'Claimer address' })
-  unclaim(
-    @Param('id', ParseIntPipe) id: number,
-    @Headers('x-sender') sender: string,
-  ) {
-    return this.bountiesService.unclaim(id, sender);
-  }
-
-  @Patch(':id/dispute')
-  @ApiOperation({ summary: 'Flag a bounty as disputed' })
-  @ApiHeader({ name: 'x-sender', description: 'Disputer address' })
-  dispute(
-    @Param('id', ParseIntPipe) id: number,
-    @Headers('x-sender') sender: string,
-  ) {
-    return this.bountiesService.dispute(id, sender);
-  }
-
-  @Patch(':id/resolve')
-  @ApiOperation({ summary: 'Resolve a dispute (admin only)' })
-  @ApiQuery({ name: 'approve', description: 'true to pay claimer, false to refund creator' })
-  resolve(
-    @Param('id', ParseIntPipe) id: number,
-    @Query('approve') approve: string,
-  ) {
-    return this.bountiesService.resolveDispute(id, approve === 'true');
   }
 }

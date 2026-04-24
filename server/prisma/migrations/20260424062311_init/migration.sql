@@ -11,15 +11,24 @@ CREATE TABLE "Bounty" (
     "deadline" INTEGER NOT NULL,
     "isAmountPublic" BOOLEAN NOT NULL DEFAULT true,
     "creator" TEXT NOT NULL,
-    "claimer" TEXT NOT NULL DEFAULT '',
-    "submissionHash" TEXT NOT NULL DEFAULT '',
-    "submissionUrl" TEXT NOT NULL DEFAULT '',
-    "submissionNotes" TEXT NOT NULL DEFAULT '',
+    "winner" TEXT NOT NULL DEFAULT '',
     "escrowBalance" TEXT NOT NULL DEFAULT '0',
     "status" INTEGER NOT NULL DEFAULT 0,
     "txHash" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "BountySubmission" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "bountyId" INTEGER NOT NULL,
+    "submitter" TEXT NOT NULL,
+    "submissionUrl" TEXT NOT NULL,
+    "notes" TEXT NOT NULL DEFAULT '',
+    "status" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "BountySubmission_bountyId_fkey" FOREIGN KEY ("bountyId") REFERENCES "Bounty" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable

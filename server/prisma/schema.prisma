@@ -7,10 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Off-chain metadata for bounties (on-chain: status, escrow, creator, claimer)
+// Bounty: open for submissions -> creator reviews -> winner paid from escrow
+// Status: 0=open (accepting submissions), 1=reviewing, 2=completed (winner paid), 3=cancelled
 model Bounty {
   id              Int      @id @default(autoincrement())
-  onChainId       Int?     @unique // maps to contract bounty_id
+  onChainId       Int?     @unique
   title           String
   description     String
   skills          String   @default("[]") // JSON array
@@ -20,15 +21,26 @@ model Bounty {
   deadline        Int
   isAmountPublic  Boolean  @default(true)
   creator         String
-  claimer         String   @default("")
-  submissionHash  String   @default("")
-  submissionUrl   String   @default("")
-  submissionNotes String   @default("")
+  winner          String   @default("") // address of selected winner
   escrowBalance   String   @default("0")
-  status          Int      @default(0) // 0=open,1=claimed,2=submitted,3=approved,4=cancelled,5=disputed
-  txHash          String?  // deployment tx hash
+  status          Int      @default(0)
+  txHash          String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  submissions     BountySubmission[]
+}
+
+// Anyone can submit work for an open bounty
+// Status: 0=pending, 1=accepted (winner), 2=rejected
+model BountySubmission {
+  id              Int      @id @default(autoincrement())
+  bountyId        Int
+  bounty          Bounty   @relation(fields: [bountyId], references: [id])
+  submitter       String
+  submissionUrl   String
+  notes           String   @default("")
+  status          Int      @default(0)
+  createdAt       DateTime @default(now())
 }
 
 // Off-chain metadata for hackathons

@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Hammer, Clock, EyeOff, Plus } from 'lucide-react';
+import { Hammer, Clock, EyeOff, Plus, FileText } from 'lucide-react';
 import { bounties } from '../lib/api';
-import { BountyStatusBadge } from '../components/StatusBadge';
 import { StatCard } from '../components/StatCard';
 import type { Bounty, BountyStats } from '../types';
 
@@ -10,6 +9,13 @@ const DIFFICULTY_DOT: Record<string, string> = {
   easy: 'bg-green-400',
   medium: 'bg-yellow-400',
   hard: 'bg-red-400',
+};
+
+const BOUNTY_STATUS: Record<number, { label: string; color: string }> = {
+  0: { label: 'Open', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
+  1: { label: 'Reviewing', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
+  2: { label: 'Completed', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+  3: { label: 'Cancelled', color: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
 };
 
 export function BountiesPage() {
@@ -74,7 +80,11 @@ export function BountiesPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2.5 mb-1.5">
                     <h3 className="text-[15px] font-semibold text-white tracking-tight truncate">{bounty.title}</h3>
-                    <BountyStatusBadge status={bounty.status} />
+                    {(() => { const s = BOUNTY_STATUS[bounty.status] ?? BOUNTY_STATUS[0]; return (
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border ${s.color}`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current" />{s.label}
+                      </span>
+                    ); })()}
                   </div>
                   <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed">{bounty.description}</p>
                   <div className="flex items-center gap-3 mt-3">
@@ -89,9 +99,15 @@ export function BountiesPage() {
                         <span className="capitalize">{bounty.difficulty}</span>
                       </span>
                     )}
+                    {(bounty as Record<string, unknown>).submissionCount !== undefined && (
+                      <span className="flex items-center gap-1 text-xs text-gray-500">
+                        <FileText className="w-3 h-3" />
+                        {String((bounty as Record<string, unknown>).submissionCount)} submissions
+                      </span>
+                    )}
                     <span className="flex items-center gap-1 text-xs text-gray-500">
                       <Clock className="w-3 h-3" />
-                      {bounty.deadline}
+                      Block {bounty.deadline}
                     </span>
                   </div>
                 </div>

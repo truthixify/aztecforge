@@ -26,14 +26,15 @@ export const bounties = {
     skills?: string[];
     difficulty?: string;
   }) => api.post('/bounties', data).then((r) => r.data),
-  claim: (id: number) => api.patch(`/bounties/${id}/claim`).then((r) => r.data),
-  submit: (id: number, data: { submissionUrl: string; submissionNotes: string }) =>
-    api.patch(`/bounties/${id}/submit`, data).then((r) => r.data),
-  approve: (id: number) => api.patch(`/bounties/${id}/approve`).then((r) => r.data),
-  reject: (id: number) => api.patch(`/bounties/${id}/reject`).then((r) => r.data),
+  submissions: (id: number) => api.get(`/bounties/${id}/submissions`).then((r) => r.data),
+  submit: (id: number, data: { submissionUrl: string; notes?: string }) =>
+    api.post(`/bounties/${id}/submissions`, data).then((r) => r.data),
+  selectWinner: (id: number, subId: number) =>
+    api.patch(`/bounties/${id}/submissions/${subId}/select`).then((r) => r.data),
+  rejectSubmission: (id: number, subId: number) =>
+    api.patch(`/bounties/${id}/submissions/${subId}/reject`).then((r) => r.data),
+  closeSubmissions: (id: number) => api.patch(`/bounties/${id}/close-submissions`).then((r) => r.data),
   cancel: (id: number) => api.patch(`/bounties/${id}/cancel`).then((r) => r.data),
-  unclaim: (id: number) => api.patch(`/bounties/${id}/unclaim`).then((r) => r.data),
-  dispute: (id: number) => api.patch(`/bounties/${id}/dispute`).then((r) => r.data),
 };
 
 // Reputation
