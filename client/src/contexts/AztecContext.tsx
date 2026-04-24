@@ -104,14 +104,14 @@ export function AztecProvider({ children }: AztecProviderProps) {
       const { EmbeddedWallet } = await import('@aztec/wallets/embedded');
       const nodeUrl = import.meta.env.VITE_AZTEC_NODE_URL ?? 'http://localhost:8080';
 
-      // Check if sandbox is reachable first
+      // Check if local node is reachable
       try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 5000);
-        await fetch(`${nodeUrl}/api/node/version`, { signal: controller.signal });
+        await fetch(nodeUrl, { signal: controller.signal, mode: 'no-cors' });
         clearTimeout(timeout);
       } catch {
-        throw new Error(`Cannot reach Aztec sandbox at ${nodeUrl}. Run: aztec start --sandbox`);
+        throw new Error(`Cannot reach Aztec node at ${nodeUrl}. Start it with: aztec start --local-network`);
       }
 
       const embeddedWallet = await EmbeddedWallet.create(nodeUrl);

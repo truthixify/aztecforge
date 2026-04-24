@@ -1,16 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAztec } from '../contexts/AztecContext';
-import { toast } from 'react-toastify';
+import { useToast } from './Toast';
 import { Wallet, ChevronDown, Check, LogOut, Shield, Code, Copy } from 'lucide-react';
 
 export function WalletButton() {
   const { isConnected, isConnecting, address, connectionMode, error, connectAzguard, connectEmbedded, disconnect } = useAztec();
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const prevError = useRef<string | null>(null);
+  const wasConnected = useRef(false);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const h = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -25,15 +26,16 @@ export function WalletButton() {
       toast.error(error);
     }
     prevError.current = error;
-  }, [error]);
+  }, [error, toast]);
 
-  // Toast on successful connection
+  // Toast on connect/disconnect
   useEffect(() => {
-    if (isConnected && address) {
-      const truncated = `${address.toString().slice(0, 8)}\u2026${address.toString().slice(-4)}`;
-      toast.success(`Connected: ${truncated}`);
+    if (isConnected && address && !wasConnected.current) {
+      const t = `${address.toString().slice(0, 8)}\u2026${address.toString().slice(-4)}`;
+      toast.success('Wallet connected', t);
     }
-  }, [isConnected, address]);
+    wasConnected.current = isConnected;
+  }, [isConnected, address, toast]);
 
   const truncate = (a: string, n = 5) => `${a.slice(0, 2 + n)}\u2026${a.slice(-n)}`;
 
@@ -46,7 +48,6 @@ export function WalletButton() {
     }
   };
 
-  // Not connected
   if (!isConnected || !address) {
     return (
       <div ref={ref} className="relative w-full">
@@ -94,7 +95,6 @@ export function WalletButton() {
     );
   }
 
-  // Connected
   const addrStr = address.toString();
   const modeLabel = connectionMode === 'azguard' ? 'Azguard' : 'Sandbox';
 
@@ -125,7 +125,6 @@ export function WalletButton() {
               </button>
             </div>
           </div>
-
           <div className="p-2">
             <button
               onClick={() => { disconnect(); setOpen(false); toast.info('Wallet disconnected'); }}
