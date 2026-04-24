@@ -43,3 +43,5 @@ pnpm-debug.log*
 
 # Design handoff files
 design/
+server/prisma/dev.db
+server/prisma/dev.db-journal

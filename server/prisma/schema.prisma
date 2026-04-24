@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Off-chain metadata for bounties (on-chain: status, escrow, creator, claimer)
+model Bounty {
+  id              Int      @id @default(autoincrement())
+  onChainId       Int?     @unique // maps to contract bounty_id
+  title           String
+  description     String
+  skills          String   @default("[]") // JSON array
+  difficulty      String   @default("medium")
+  paymentToken    String
+  rewardAmount    String
+  deadline        Int
+  isAmountPublic  Boolean  @default(true)
+  creator         String
+  claimer         String   @default("")
+  submissionHash  String   @default("")
+  submissionUrl   String   @default("")
+  submissionNotes String   @default("")
+  escrowBalance   String   @default("0")
+  status          Int      @default(0) // 0=open,1=claimed,2=submitted,3=approved,4=cancelled,5=disputed
+  txHash          String?  // deployment tx hash
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Off-chain metadata for hackathons
+model Hackathon {
+  id                 Int      @id @default(autoincrement())
+  onChainId          Int?     @unique
+  name               String
+  description        String
+  paymentToken       String
+  prizePool          String
+  status             Int      @default(0) // 0=registration,1=building,2=judging,3=completed,4=cancelled
+  submissionDeadline Int
+  judgingDeadline     Int
+  tracks             String   @default("[]") // JSON array
+  organizer          String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  teams              Team[]
+  submissions        Submission[]
+}
+
+model Team {
+  id          Int       @id @default(autoincrement())
+  hackathonId Int
+  hackathon   Hackathon @relation(fields: [hackathonId], references: [id])
+  name        String
+  lead        String
+  members     String    @default("[]") // JSON array
+  createdAt   DateTime  @default(now())
+}
+
+model Submission {
+  id           Int       @id @default(autoincrement())
+  hackathonId  Int
+  hackathon    Hackathon @relation(fields: [hackathonId], references: [id])
+  teamId       Int
+  trackIndex   Int
+  projectName  String
+  description  String
+  repoUrl      String
+  demoUrl      String    @default("")
+  averageScore Float     @default(0)
+  createdAt    DateTime  @default(now())
+}
+
+// Off-chain metadata for funding pools
+model FundingPool {
+  id              Int      @id @default(autoincrement())
+  onChainId       Int?     @unique
+  purpose         String
+  paymentToken    String
+  poolType        Int      @default(0) // 0=open,1=quadratic,2=retroactive,3=streaming
+  status          Int      @default(0) // 0=active,1=paused,2=closed
+  curator         String
+  totalDeposited  String   @default("0")
+  totalDisbursed  String   @default("0")
+  contributorCount Int     @default(0)
+  recipientCount  Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Off-chain metadata for peer allocation circles
+model Circle {
+  id                 Int      @id @default(autoincrement())
+  onChainId          Int?     @unique
+  name               String
+  paymentToken       String
+  epochDuration      Int
+  currentEpoch       Int      @default(0)
+  memberCount        Int      @default(0)
+  givePerMember      Int
+  rewardPool         String
+  totalDistributed   String   @default("0")
+  admin              String
+  members            String   @default("[]") // JSON array
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+// Off-chain metadata for quests
+model Quest {
+  id                  Int      @id @default(autoincrement())
+  onChainId           Int?     @unique
+  name                String
+  description         String
+  questType           Int      @default(0) // 0=on-chain,1=content,2=dev,3=community
+  paymentToken        String
+  rewardPerCompletion String
+  maxCompletions      Int      @default(0)
+  completionCount     Int      @default(0)
+  deadline            Int
+  status              Int      @default(0) // 0=active,1=inactive
+  reputationGateId    Int      @default(0)
+  creator             String
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  completions         QuestCompletion[]
+}
+
+model QuestCompletion {
+  id              Int      @id @default(autoincrement())
+  questId         Int
+  quest           Quest    @relation(fields: [questId], references: [id])
+  completer       String
+  verificationUrl String
+  completedAt     DateTime @default(now())
+}
+
+// Contributor reputation (cached from on-chain + off-chain enrichment)
+model Contributor {
+  id                     Int      @id @default(autoincrement())
+  address                String   @unique
+  score                  Int      @default(0)
+  tier                   Int      @default(0)
+  bountiesCompleted      Int      @default(0)
+  bountiesTotalEarned    String   @default("0")
+  hackathonsParticipated Int      @default(0)
+  hackathonsWon          Int      @default(0)
+  grantsReceived         Int      @default(0)
+  grantsTotalEarned      String   @default("0")
+  milestonesDelivered    Int      @default(0)
+  questsCompleted        Int      @default(0)
+  peerGiveReceived       String   @default("0")
+  peerEpochsParticipated Int      @default(0)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}

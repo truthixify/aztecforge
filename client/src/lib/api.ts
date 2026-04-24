@@ -138,3 +138,8 @@ export const quests = {
 };
 
 export default api;
+
+// Dashboard stats
+export const stats = {
+  dashboard: () => api.get("/stats").then((r) => r.data),
+};

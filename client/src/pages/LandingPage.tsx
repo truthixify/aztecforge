@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, Hammer, Trophy, Coins, Users, Scroll, Star } from 'lucide-react';
+import { stats } from '../lib/api';
 
 const MODULES = [
   { to: '/bounties', label: 'Bounties', icon: Hammer, hint: 'Task-based rewards' },
@@ -10,12 +12,12 @@ const MODULES = [
   { to: '/reputation', label: 'Reputation', icon: Star, hint: 'On-chain standing' },
 ];
 
-const STATS = [
-  { label: 'Active bounties', value: '12' },
-  { label: 'USDC in escrow', value: '$142k' },
-  { label: 'Contributors', value: '384' },
-  { label: 'Hackathons live', value: '3' },
-];
+function formatUsd(val: string) {
+  const n = Number(val);
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}m`;
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}k`;
+  return `$${n}`;
+}
 
 const STEPS = [
   { step: '01', title: 'Fund escrow', body: 'Deposit USDC into a private escrow. Amounts can be shielded \u2014 contributors see only status, not totals.' },
@@ -24,6 +26,18 @@ const STEPS = [
 ];
 
 export function LandingPage() {
+  const { data: dashStats } = useQuery({
+    queryKey: ['stats', 'dashboard'],
+    queryFn: () => stats.dashboard(),
+  });
+
+  const liveStats = [
+    { label: 'Active bounties', value: String(dashStats?.activeBounties ?? 0) },
+    { label: 'USDC in escrow', value: formatUsd(dashStats?.totalEscrowed ?? '0') },
+    { label: 'Contributors', value: String(dashStats?.totalContributors ?? 0) },
+    { label: 'Hackathons live', value: String(dashStats?.activeHackathons ?? 0) },
+  ];
+
   return (
     <div className="relative">
       {/* Animated background orbs */}
@@ -74,7 +88,7 @@ export function LandingPage() {
 
           {/* Stats strip */}
           <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-px rounded-2xl overflow-hidden border border-[var(--line)] bg-[var(--line)]">
-            {STATS.map((s) => (
+            {liveStats.map((s) => (
               <div key={s.label} className="bg-[var(--bg-0)]/70 backdrop-blur-sm px-5 py-4">
                 <div className="text-[10px] uppercase tracking-wider text-gray-500 font-medium mb-1.5">{s.label}</div>
                 <div className="text-2xl md:text-3xl font-semibold text-white tabular-nums tracking-tight">{s.value}</div>

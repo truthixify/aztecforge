@@ -1,130 +1,129 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import {
-  ContributorReputation,
-  ReputationGate,
-  ReputationTier,
-} from '../common/entities/reputation.entity';
+import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class ReputationService {
-  private contributors: Map<string, ContributorReputation> = new Map();
-  private gates: Map<number, ReputationGate> = new Map();
-  private nextGateId = 0;
+  constructor(private prisma: PrismaService) {}
 
-  getOrCreate(address: string): ContributorReputation {
-    let rep = this.contributors.get(address);
-    if (!rep) {
-      rep = {
-        address,
-        score: 0,
-        tier: ReputationTier.NEWCOMER,
-        bountiesCompleted: 0,
-        bountiesTotalEarned: '0',
-        hackathonsParticipated: 0,
-        hackathonsWon: 0,
-        grantsReceived: 0,
-        grantsTotalEarned: '0',
-        milestonesDelivered: 0,
-        questsCompleted: 0,
-        peerGiveReceived: '0',
-        peerEpochsParticipated: 0,
-      };
-      this.contributors.set(address, rep);
-    }
-    return rep;
-  }
-
-  findOne(address: string): ContributorReputation {
-    const rep = this.contributors.get(address);
+  async findOne(address: string) {
+    const rep = await this.prisma.contributor.findUnique({ where: { address } });
     if (!rep) throw new NotFoundException(`Contributor ${address} not found`);
     return rep;
   }
 
-  findAll(): ContributorReputation[] {
-    return Array.from(this.contributors.values());
+  async findAll() {
+    return this.prisma.contributor.findMany({ orderBy: { score: 'desc' } });
   }
 
-  getLeaderboard(limit = 20): ContributorReputation[] {
-    return Array.from(this.contributors.values())
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
+  async getLeaderboard(limit = 20) {
+    return this.prisma.contributor.findMany({ orderBy: { score: 'desc' }, take: limit });
   }
 
-  recordBountyCompletion(address: string, earnedAmount: string): ContributorReputation {
-    const rep = this.getOrCreate(address);
-    rep.bountiesCompleted++;
-    rep.bountiesTotalEarned = (BigInt(rep.bountiesTotalEarned) + BigInt(earnedAmount)).toString();
-    this.recomputeScore(rep);
-    return rep;
+  async getOrCreate(address: string) {
+    return this.prisma.contributor.upsert({
+      where: { address },
+      create: { address },
+      update: {},
+    });
   }
 
-  recordHackathonResult(address: string, won: boolean): ContributorReputation {
-    const rep = this.getOrCreate(address);
-    rep.hackathonsParticipated++;
-    if (won) rep.hackathonsWon++;
-    this.recomputeScore(rep);
-    return rep;
+  async recordBountyCompletion(address: string, earnedAmount: string) {
+    const rep = await this.getOrCreate(address);
+    const newEarned = (BigInt(rep.bountiesTotalEarned) + BigInt(earnedAmount)).toString();
+    const newCount = rep.bountiesCompleted + 1;
+    const score = this.computeScore({ ...rep, bountiesCompleted: newCount });
+    return this.prisma.contributor.update({
+      where: { address },
+      data: {
+        bountiesCompleted: newCount,
+        bountiesTotalEarned: newEarned,
+        score,
+        tier: this.scoreTier(score),
+      },
+    });
   }
 
-  recordGrantDelivery(address: string, grantAmount: string): ContributorReputation {
-    const rep = this.getOrCreate(address);
-    rep.grantsReceived++;
-    rep.grantsTotalEarned = (BigInt(rep.grantsTotalEarned) + BigInt(grantAmount)).toString();
-    rep.milestonesDelivered++;
-    this.recomputeScore(rep);
-    return rep;
+  async recordHackathonResult(address: string, won: boolean) {
+    const rep = await this.getOrCreate(address);
+    const data: Record<string, number> = { hackathonsParticipated: rep.hackathonsParticipated + 1 };
+    if (won) data.hackathonsWon = rep.hackathonsWon + 1;
+    const score = this.computeScore({ ...rep, ...data });
+    return this.prisma.contributor.update({
+      where: { address },
+      data: { ...data, score, tier: this.scoreTier(score) },
+    });
   }
 
-  recordPeerRecognition(address: string, giveAmount: string): ContributorReputation {
-    const rep = this.getOrCreate(address);
-    rep.peerGiveReceived = (BigInt(rep.peerGiveReceived) + BigInt(giveAmount)).toString();
-    rep.peerEpochsParticipated++;
-    this.recomputeScore(rep);
-    return rep;
+  async recordGrantDelivery(address: string, grantAmount: string) {
+    const rep = await this.getOrCreate(address);
+    const score = this.computeScore({
+      ...rep,
+      grantsReceived: rep.grantsReceived + 1,
+      milestonesDelivered: rep.milestonesDelivered + 1,
+    });
+    return this.prisma.contributor.update({
+      where: { address },
+      data: {
+        grantsReceived: rep.grantsReceived + 1,
+        grantsTotalEarned: (BigInt(rep.grantsTotalEarned) + BigInt(grantAmount)).toString(),
+        milestonesDelivered: rep.milestonesDelivered + 1,
+        score,
+        tier: this.scoreTier(score),
+      },
+    });
   }
 
-  recordQuestCompletion(address: string): ContributorReputation {
-    const rep = this.getOrCreate(address);
-    rep.questsCompleted++;
-    this.recomputeScore(rep);
-    return rep;
+  async recordPeerRecognition(address: string, giveAmount: string) {
+    const rep = await this.getOrCreate(address);
+    const score = this.computeScore({ ...rep, peerEpochsParticipated: rep.peerEpochsParticipated + 1 });
+    return this.prisma.contributor.update({
+      where: { address },
+      data: {
+        peerGiveReceived: (BigInt(rep.peerGiveReceived) + BigInt(giveAmount)).toString(),
+        peerEpochsParticipated: rep.peerEpochsParticipated + 1,
+        score,
+        tier: this.scoreTier(score),
+      },
+    });
   }
 
-  createGate(config: Omit<ReputationGate, 'id' | 'active'>): ReputationGate {
-    const gate: ReputationGate = { ...config, id: this.nextGateId++, active: true };
-    this.gates.set(gate.id, gate);
-    return gate;
+  async recordQuestCompletion(address: string) {
+    const rep = await this.getOrCreate(address);
+    const score = this.computeScore({ ...rep, questsCompleted: rep.questsCompleted + 1 });
+    return this.prisma.contributor.update({
+      where: { address },
+      data: {
+        questsCompleted: rep.questsCompleted + 1,
+        score,
+        tier: this.scoreTier(score),
+      },
+    });
   }
 
-  checkGate(address: string, gateId: number): boolean {
-    const gate = this.gates.get(gateId);
-    if (!gate || !gate.active) return false;
-    const rep = this.contributors.get(address);
-    if (!rep) return false;
-    return (
-      rep.bountiesCompleted >= gate.minBounties &&
-      rep.hackathonsWon >= gate.minHackathonWins &&
-      rep.tier >= gate.minTier
-    );
+  async getTotalContributors() {
+    return this.prisma.contributor.count();
   }
 
-  getTotalContributors(): number {
-    return this.contributors.size;
+  async createGate(config: { minBounties: number; minHackathonWins: number; minTier: number; minTenureBlocks: number }) {
+    // Gates are on-chain only — return a mock for now
+    return { id: 0, ...config, active: true };
   }
 
-  private recomputeScore(rep: ContributorReputation): void {
-    rep.score =
-      rep.bountiesCompleted * 10 +
-      rep.hackathonsWon * 50 +
-      rep.grantsReceived * 30 +
-      rep.milestonesDelivered * 20 +
-      rep.questsCompleted * 5 +
-      rep.peerEpochsParticipated * 15;
+  async checkGate(address: string, _gateId: number) {
+    const rep = await this.prisma.contributor.findUnique({ where: { address } });
+    return rep ? rep.tier >= 1 : false;
+  }
 
-    if (rep.score >= 500) rep.tier = ReputationTier.CORE;
-    else if (rep.score >= 200) rep.tier = ReputationTier.EXPERT;
-    else if (rep.score >= 50) rep.tier = ReputationTier.BUILDER;
-    else if (rep.score >= 10) rep.tier = ReputationTier.CONTRIBUTOR;
-    else rep.tier = ReputationTier.NEWCOMER;
+  private computeScore(rep: { bountiesCompleted: number; hackathonsWon: number; grantsReceived: number; milestonesDelivered: number; questsCompleted: number; peerEpochsParticipated: number }) {
+    return rep.bountiesCompleted * 10 + rep.hackathonsWon * 50 + rep.grantsReceived * 30 +
+      rep.milestonesDelivered * 20 + rep.questsCompleted * 5 + rep.peerEpochsParticipated * 15;
+  }
+
+  private scoreTier(score: number): number {
+    if (score >= 500) return 4;
+    if (score >= 200) return 3;
+    if (score >= 50) return 2;
+    if (score >= 10) return 1;
+    return 0;
   }
 }

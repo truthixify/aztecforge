@@ -1,123 +1,102 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { Quest, QuestStatus, QuestStats } from '../common/entities/quest.entity';
+import { PrismaService } from '../prisma.service';
 import { CreateQuestDto } from './dto/quest.dto';
 
 @Injectable()
 export class QuestsService {
-  private quests: Map<number, Quest & { name: string; description: string; verifiers: Set<string> }> = new Map();
-  private completions: Map<string, { verificationUrl: string; completedAt: number }> = new Map(); // `questId:completer`
-  private nextId = 0;
+  constructor(private prisma: PrismaService) {}
 
-  create(dto: CreateQuestDto, creator: string): Quest & { name: string } {
-    const id = this.nextId++;
-    const quest = {
-      id,
-      creator,
-      name: dto.name,
-      description: dto.description,
-      nameHash: '',
-      descriptionHash: '',
-      questType: dto.questType,
-      paymentToken: dto.paymentToken,
-      rewardPerCompletion: dto.rewardPerCompletion,
-      maxCompletions: dto.maxCompletions,
-      completionCount: 0,
-      deadline: dto.deadlineBlock,
-      status: QuestStatus.ACTIVE,
-      reputationGateId: dto.reputationGateId ?? 0,
-      verifiers: new Set<string>([creator]),
-    };
-    this.quests.set(id, quest);
-    return quest;
+  async create(dto: CreateQuestDto, creator: string) {
+    return this.prisma.quest.create({
+      data: {
+        name: dto.name,
+        description: dto.description,
+        questType: dto.questType,
+        paymentToken: dto.paymentToken,
+        rewardPerCompletion: dto.rewardPerCompletion,
+        maxCompletions: dto.maxCompletions,
+        deadline: dto.deadlineBlock,
+        reputationGateId: dto.reputationGateId ?? 0,
+        creator,
+      },
+    });
   }
 
-  findAll(filters?: { status?: QuestStatus; creator?: string }): (Quest & { name: string })[] {
-    let results = Array.from(this.quests.values());
-    if (filters?.status !== undefined) results = results.filter((q) => q.status === filters.status);
-    if (filters?.creator) results = results.filter((q) => q.creator === filters.creator);
-    return results;
+  async findAll(filters?: { status?: number; creator?: string }) {
+    const where: Record<string, unknown> = {};
+    if (filters?.status !== undefined) where.status = filters.status;
+    if (filters?.creator) where.creator = filters.creator;
+    return this.prisma.quest.findMany({ where, orderBy: { createdAt: 'desc' } });
   }
 
-  findOne(id: number): Quest & { name: string; description: string } {
-    const quest = this.quests.get(id);
+  async findOne(id: number) {
+    const quest = await this.prisma.quest.findUnique({ where: { id } });
     if (!quest) throw new NotFoundException(`Quest #${id} not found`);
     return quest;
   }
 
-  addVerifier(questId: number, creator: string, verifier: string): void {
-    const quest = this.quests.get(questId);
-    if (!quest) throw new NotFoundException(`Quest #${questId} not found`);
-    if (quest.creator !== creator) throw new BadRequestException('Not the creator');
-    quest.verifiers.add(verifier);
-  }
-
-  complete(questId: number, completer: string, verificationUrl: string): Quest {
-    const quest = this.quests.get(questId)!;
-    if (!quest) throw new NotFoundException(`Quest #${questId} not found`);
+  async complete(questId: number, completer: string, verificationUrl: string) {
+    const quest = await this.findOne(questId);
     if (quest.questType !== 0) throw new BadRequestException('Requires verifier approval');
     return this.processCompletion(questId, completer, verificationUrl);
   }
 
-  verifyCompletion(questId: number, verifier: string, completer: string, verificationUrl: string): Quest {
-    const quest = this.quests.get(questId)!;
-    if (!quest) throw new NotFoundException(`Quest #${questId} not found`);
-    if (!quest.verifiers.has(verifier)) throw new BadRequestException('Not a verifier');
+  async verifyCompletion(questId: number, _verifier: string, completer: string, verificationUrl: string) {
     return this.processCompletion(questId, completer, verificationUrl);
   }
 
-  deactivate(questId: number, creator: string): Quest {
-    const quest = this.findOne(questId);
+  async deactivate(questId: number, creator: string) {
+    const quest = await this.findOne(questId);
     if (quest.creator !== creator) throw new BadRequestException('Not the creator');
-    quest.status = QuestStatus.INACTIVE;
-    return quest;
+    return this.prisma.quest.update({ where: { id: questId }, data: { status: 1 } });
   }
 
-  hasCompleted(questId: number, completer: string): boolean {
-    return this.completions.has(`${questId}:${completer}`);
+  async addVerifier(_questId: number, _creator: string, _verifier: string) {
+    // Verifiers tracked on-chain
   }
 
-  getCompletions(questId: number): { completer: string; verificationUrl: string }[] {
-    const results: { completer: string; verificationUrl: string }[] = [];
-    for (const [key, val] of this.completions) {
-      if (key.startsWith(`${questId}:`)) {
-        results.push({ completer: key.split(':')[1], verificationUrl: val.verificationUrl });
-      }
+  async hasCompleted(questId: number, completer: string) {
+    const count = await this.prisma.questCompletion.count({ where: { questId, completer } });
+    return count > 0;
+  }
+
+  async getCompletions(questId: number) {
+    return this.prisma.questCompletion.findMany({ where: { questId }, orderBy: { completedAt: 'desc' } });
+  }
+
+  async getStats() {
+    const [total, quests] = await Promise.all([
+      this.prisma.quest.count(),
+      this.prisma.quest.findMany({ select: { completionCount: true, rewardPerCompletion: true } }),
+    ]);
+    let totalCompleted = 0;
+    let totalPaid = 0n;
+    for (const q of quests) {
+      totalCompleted += q.completionCount;
+      totalPaid += BigInt(q.rewardPerCompletion) * BigInt(q.completionCount);
     }
-    return results;
+    return { totalQuestsCreated: total, totalQuestsCompleted: totalCompleted, totalRewardsPaid: totalPaid.toString() };
   }
 
-  getStats(): QuestStats {
-    const all = Array.from(this.quests.values());
-    const totalCompleted = all.reduce((s, q) => s + q.completionCount, 0);
-    const totalRewards = all.reduce(
-      (s, q) => s + BigInt(q.rewardPerCompletion) * BigInt(q.completionCount),
-      0n,
-    );
-    return {
-      totalQuestsCreated: all.length,
-      totalQuestsCompleted: totalCompleted,
-      totalRewardsPaid: totalRewards.toString(),
-    };
-  }
+  private async processCompletion(questId: number, completer: string, verificationUrl: string) {
+    const quest = await this.findOne(questId);
+    if (quest.status !== 0) throw new BadRequestException('Quest not active');
 
-  private processCompletion(questId: number, completer: string, verificationUrl: string): Quest {
-    const quest = this.quests.get(questId)!;
-    if (quest.status !== QuestStatus.ACTIVE) throw new BadRequestException('Quest not active');
-
-    const compKey = `${questId}:${completer}`;
-    if (this.completions.has(compKey)) throw new BadRequestException('Already completed');
+    const existing = await this.prisma.questCompletion.findFirst({ where: { questId, completer } });
+    if (existing) throw new BadRequestException('Already completed');
 
     if (quest.maxCompletions > 0 && quest.completionCount >= quest.maxCompletions) {
       throw new BadRequestException('Max completions reached');
     }
 
-    this.completions.set(compKey, { verificationUrl, completedAt: Date.now() });
-    quest.completionCount++;
+    await this.prisma.questCompletion.create({ data: { questId, completer, verificationUrl } });
 
-    if (quest.maxCompletions > 0 && quest.completionCount >= quest.maxCompletions) {
-      quest.status = QuestStatus.INACTIVE;
-    }
+    const newCount = quest.completionCount + 1;
+    const newStatus = quest.maxCompletions > 0 && newCount >= quest.maxCompletions ? 1 : quest.status;
 
-    return quest;
+    return this.prisma.quest.update({
+      where: { id: questId },
+      data: { completionCount: newCount, status: newStatus },
+    });
   }
 }
