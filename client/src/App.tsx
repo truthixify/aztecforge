@@ -4,6 +4,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AztecProvider } from './contexts/AztecContext';
 import { Layout } from './components/Layout';
+import { LandingPage } from './pages/LandingPage';
 import { BountiesPage } from './pages/BountiesPage';
 import { BountyDetailPage } from './pages/BountyDetailPage';
 import { CreateBountyPage } from './pages/CreateBountyPage';
@@ -38,7 +39,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
-            <Route path="/" element={<BountiesPage />} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/bounties" element={<BountiesPage />} />
             <Route path="/bounties/new" element={<CreateBountyPage />} />
             <Route path="/bounties/:id" element={<BountyDetailPage />} />

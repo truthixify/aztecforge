@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --accent-200: #c4b5fd;
-  --accent-300: #a5b4fc;
-  --accent-400: #818cf8;
-  --accent-500: #6366f1;
-  --accent-600: #4f46e5;
-  --accent-700: #4338ca;
+  --accent-200: #fecdd3;
+  --accent-300: #fda4af;
+  --accent-400: #fb7185;
+  --accent-500: #f43f5e;
+  --accent-600: #e11d48;
+  --accent-700: #be123c;
   --bg-0: #0b0b14;
   --bg-1: #12121d;
   --bg-2: #1a1a28;
@@ -27,7 +27,7 @@ html, body {
 body {
   background:
     radial-gradient(1100px 600px at 85% -10%, color-mix(in oklab, var(--accent-600) 18%, transparent), transparent 60%),
-    radial-gradient(900px 500px at -10% 110%, color-mix(in oklab, #7c3aed 14%, transparent), transparent 55%),
+    radial-gradient(900px 500px at -10% 110%, color-mix(in oklab, var(--accent-700) 14%, transparent), transparent 55%),
     var(--bg-0);
   min-height: 100vh;
 }

@@ -141,11 +141,26 @@ export function Layout() {
       )}
 
       {/* Main content */}
-      <main className="md:ml-60 min-h-screen">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="md:ml-60 relative min-h-screen flex flex-col">
+        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-5 md:py-10">
           <Outlet />
-        </div>
-      </main>
+        </main>
+        <footer className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8 border-t border-[var(--line)]">
+          <div className="flex items-center justify-between flex-wrap gap-2 text-xs text-gray-600">
+            <div className="flex items-center gap-2">
+              <LogoMark size={16} />
+              <span>AztecForge &middot; Private community incentives on Aztec Network</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span>Block 100,000</span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400" style={{ animation: 'pulseGlow 2s ease-in-out infinite' }} />
+                Testnet
+              </span>
+            </div>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
