@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAztec } from '../contexts/AztecContext';
+import { toast } from 'react-toastify';
 import { Wallet, ChevronDown, Check, LogOut, Shield, Code, Copy } from 'lucide-react';
 
 export function WalletButton() {
@@ -7,7 +8,9 @@ export function WalletButton() {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const prevError = useRef<string | null>(null);
 
+  // Close dropdown on outside click
   useEffect(() => {
     const h = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -16,12 +19,29 @@ export function WalletButton() {
     return () => document.removeEventListener('mousedown', h);
   }, []);
 
+  // Show errors as toasts
+  useEffect(() => {
+    if (error && error !== prevError.current) {
+      toast.error(error);
+    }
+    prevError.current = error;
+  }, [error]);
+
+  // Toast on successful connection
+  useEffect(() => {
+    if (isConnected && address) {
+      const truncated = `${address.toString().slice(0, 8)}\u2026${address.toString().slice(-4)}`;
+      toast.success(`Connected: ${truncated}`);
+    }
+  }, [isConnected, address]);
+
   const truncate = (a: string, n = 5) => `${a.slice(0, 2 + n)}\u2026${a.slice(-n)}`;
 
   const copyAddr = () => {
     if (address) {
       navigator.clipboard?.writeText(address.toString());
       setCopied(true);
+      toast.success('Address copied');
       setTimeout(() => setCopied(false), 1200);
     }
   };
@@ -44,11 +64,11 @@ export function WalletButton() {
         </button>
 
         {open && !isConnecting && (
-          <div className="absolute bottom-full left-0 right-0 mb-2 bg-[var(--bg-1)] border border-[var(--line)] rounded-xl shadow-2xl overflow-hidden" style={{ animation: 'slideDown 0.15s ease-out' }}>
+          <div className="absolute bottom-full left-0 right-0 mb-2 bg-[var(--bg-1)] border border-[var(--line)] rounded-xl shadow-2xl overflow-hidden z-50" style={{ animation: 'slideDown 0.15s ease-out' }}>
             <div className="p-2">
               <button
-                onClick={() => { connectAzguard(); setOpen(false); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--bg-2)] transition-colors text-left"
+                onClick={() => { setOpen(false); connectAzguard(); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--bg-2)] transition-colors text-left cursor-pointer"
               >
                 <Shield className="w-4 h-4 text-[var(--accent-400)]" />
                 <div className="flex-1 min-w-0">
@@ -58,8 +78,8 @@ export function WalletButton() {
               </button>
 
               <button
-                onClick={() => { connectEmbedded(); setOpen(false); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--bg-2)] transition-colors text-left"
+                onClick={() => { setOpen(false); connectEmbedded(); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--bg-2)] transition-colors text-left cursor-pointer"
               >
                 <Code className="w-4 h-4 text-blue-400" />
                 <div className="flex-1 min-w-0">
@@ -69,10 +89,6 @@ export function WalletButton() {
               </button>
             </div>
           </div>
-        )}
-
-        {error && (
-          <div className="mt-1.5 text-[11px] text-red-400 truncate" title={error}>{error}</div>
         )}
       </div>
     );
@@ -99,23 +115,21 @@ export function WalletButton() {
       </button>
 
       {open && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 bg-[var(--bg-1)] border border-[var(--line)] rounded-xl shadow-2xl overflow-hidden" style={{ animation: 'slideDown 0.15s ease-out' }}>
-          {/* Connected address */}
+        <div className="absolute bottom-full left-0 right-0 mb-2 bg-[var(--bg-1)] border border-[var(--line)] rounded-xl shadow-2xl overflow-hidden z-50" style={{ animation: 'slideDown 0.15s ease-out' }}>
           <div className="p-3 border-b border-[var(--line)]">
             <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Connected</div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs text-gray-200 truncate flex-1">{addrStr}</span>
-              <button onClick={copyAddr} className="text-gray-500 hover:text-gray-200 transition-colors p-1 rounded hover:bg-[var(--bg-2)]">
+              <button onClick={copyAddr} className="text-gray-500 hover:text-gray-200 transition-colors p-1 rounded hover:bg-[var(--bg-2)] cursor-pointer">
                 {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
           </div>
 
-          {/* Disconnect */}
           <div className="p-2">
             <button
-              onClick={() => { disconnect(); setOpen(false); }}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-red-400 hover:bg-red-500/5 transition-colors"
+              onClick={() => { disconnect(); setOpen(false); toast.info('Wallet disconnected'); }}
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-red-400 hover:bg-red-500/5 transition-colors cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               Disconnect
